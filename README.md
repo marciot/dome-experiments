@@ -1,11 +1,13 @@
 ![alt text][logo]
 
-Dome Experiments
-================
+THREE.js Dome Experiments
+=========================
 
-This repository contains experiments in buildingTHREE.js content for [DomeLab]. Please follow this link for the online demos:
+This repository contains experiments in building THREE.js content for [DomeLab]. Click this [link](http://marciot.com/dome-experiments) for online demonstrations.
 
-[online demos](http://marciot.com/dome-experiments)
+## How to see the demos:
+
+Dome projection can be done by using [CefWithSyphon] and [Blendy Dome VJ]. If you do not have these, you can also see the demos in VR.
 
 ## Supported VR Headsets:
 
