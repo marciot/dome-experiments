@@ -7,43 +7,99 @@
                 color:      white;
                 background: black;
             }
-            
+
             a {
                 color:      yellow;
             }
-            
+
             body {
                 font-family:   "Gill Sans", "Gill Sans MT", Calibri, sans-serif;
             }
-            
+
             li:not(:last-child) {
                 margin-bottom: 0.3em;
             }
-            
+
             ul {
                 list-style-type: square;
+            }
+
+            table {
+                width:          80%;
+                margin:         0 auto;
+                border-spacing: 5px;
+            }
+
+            .heading th {
+                background: #333333;
+            }
+
+            th.demo {
+                width: 30%;
             }
         </style>
     </head>
     <body>
         <h1>THREE.js Dome Experiments</h1>
-        
+
         This web page is dedicated to my experiments in building content for <a href="https://www.facebook.com/groups/DomeLab/">DomeLab</a>.
-        
-        <h3>Demos and Code:</h3>
+
+        <h2>The Demos:</h2>
+        <table id="demoTable">
+            <tr class="heading"><td></td><th colspan="4">Renderer</th></tr>
+        </table>
+
+        <h2>The Renderers:</h2>
+
         <ul>
-        <li><a href="panorama-renderer">PanoramaRenderer</a> - Real-time rendering into an equirectangular panorama.
+            <li><strong>WebVR</strong>     - Preview scene in virtual reality with depth.
+            <li><strong>WebVRDome</strong> - Preview "flat" scene in a virtual reality dome theater.
+            <li><strong>Panorama</strong> - Equirectangular 360 panorama for projection.
+            <li><strong>FullDome</strong> - Hemispherical image for projection.
         </ul>
-        
-        <h3>Resources:</h3>
+
+        <h2>Supported VR Headsets:</h2>
+
+        <p>
+        The two WebVR renderers should work on all major headsets, including Cardboard.
+        </p>
+
+        <p>
+        <strong>GearVR:</strong> You must download the <a href="https://www.oculus.com/experiences/gear-vr/849609821813454/" target="_blank">Samsung Internet Browser for Gear VR</a> from the <cite>Oculus Store</cite> Android app. You must then visit this webpage while in VR mode.
+        </p>
+
+        <p>
+        <strong>Oculus Rift and HTC Vive:</strong> Rift and Vive users must visit this page using an experimental WebVR version of <a href="https://webvr.info/get-chrome/" target="_blank">Chrome</a> or <a href="https://mozvr.com/" target="_blank">Firefox</a>.
+        </p>
+
+        <h2>Resources:</h2>
         <ul>
         <li><a href="https://github.com/spite/THREE.CubemapToEquirectangular">THREE.CubemapToEquirectangular</a> - Code from which I built the PanoramaRenderer.
-        <li><a href="https://github.com/vibber/CefWithSyphon">CefWithSyphon</a> - Special build of Chrome that can send HTML/WebGL/THREE.js/p5.js content to Blendy Dome VJs via Syphon
+        <li><a href="https://github.com/vibber/CefWithSyphon">CefWithSyphon</a> - Special build of Chrome that can send content to Blendy Dome VJs via Syphon
         <li><a href="http://www.blendydomevj.com">Blendy Dome VJs</a> - Dome projection software that can project Syphon content to dome.
+        <li><a href="https://webvr.info/">WebVR</a> - Information on WebVR used in the preview renderers
+        <li><a href="https://threejs.org/">THREE.js</a> - The JavaScript graphics library used in these demos
         </ul>
-        
+
         <!-- Fork me on github ribbon -->
 <a href="https://github.com/marciot"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/38ef81f8aca64bb9a64448d0d70f1308ef5341ab/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6461726b626c75655f3132313632312e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png"></a>
         <!-- End of fork me on github ribbon -->
+
+        <script>
+            var demos = document.getElementById("demoTable");
+            function addDemo(name, scene) {
+                scene = scene || name;
+                var tr = document.createElement("tr");
+                tr.innerHTML = '<th class="demo">' + name + '</th>' +
+                    '<td><a href="demo/?scene=' + scene + '&renderer=WebVRRenderer">WebVR</a></td>' +
+                    '<td><a href="demo/?scene=' + scene + '&renderer=WebVRDomeRenderer">WebVRDome</a></td>' +
+                    '<td><a href="demo/?scene=' + scene + '&renderer=PanoramaRenderer">Panorama</a></td>' +
+                    '<td><a href="demo/?scene=' + scene + '&renderer=FullDomeRenderer">FullDome</a></td>';
+                demos.appendChild(tr);
+            }
+
+            addDemo("cubes");
+            addDemo("knots");
+        </script>
     </body>
 </html>

@@ -1,4 +1,4 @@
-/* The PanoramaRender code presented here is adapted from:
+/* The FullDomeRenderer code presented here is adapted from:
  *
  *   https://github.com/spite/THREE.CubemapToEquirectangular
  */
@@ -24,10 +24,10 @@ var fragmentShader =
 
 "void main()  {\n" +
 
-"   vec2 uv = vUv;\n" +
+"   vec2 uv = vUv - vec2(0.5, 0.5);\n" +
 
-"   float longitude =  uv.x * 2. * M_PI - M_PI + M_PI / 2.;\n" +
-"   float latitude =   uv.y * M_PI;\n" +
+"   float longitude =  atan(uv.x,uv.y);\n" +
+"   float latitude =   length(uv) * M_PI;\n" +
 
 "   vec3 dir = vec3(\n" +
 "       - sin( longitude ) * sin( latitude ),\n" +
@@ -40,7 +40,7 @@ var fragmentShader =
 
 "}\n";
 
-function PanoramaRender( renderer ) {
+function FullDomeRenderer( renderer ) {
     const desiredCubeMapSize = 2048;
 
     this.renderer = renderer;
@@ -56,6 +56,8 @@ function PanoramaRender( renderer ) {
         fragmentShader: fragmentShader,
         side: THREE.DoubleSide
     } );
+    
+    const eyeHeightInMeters    = 1.7;
     
     this.scene = new THREE.Scene();
     this.quad = new THREE.Mesh(
@@ -81,9 +83,10 @@ function PanoramaRender( renderer ) {
         1000,   // Far clipping distance
         Math.min(maxSize, desiredCubeMapSize)
     );
+    this.cubeCamera.position.y = eyeHeightInMeters;
 }
 
-PanoramaRender.prototype.setSize = function( width, height ) {
+FullDomeRenderer.prototype.setSize = function( width, height ) {
 	this.width = width;
 	this.height = height;
 
@@ -97,7 +100,7 @@ PanoramaRender.prototype.setSize = function( width, height ) {
 	this.camera.updateProjectionMatrix();
 }
 
-PanoramaRender.prototype.render = function( scene ) {
+FullDomeRenderer.prototype.render = function( scene ) {
     /* Step 1: Render the user's scene to the CubeCamera's texture */
 	var autoClear = this.renderer.autoClear;
 	this.renderer.autoClear = true;
@@ -114,14 +117,12 @@ PanoramaRender.prototype.render = function( scene ) {
 
 /* Main function that kickstarts the animation loop */
 function startAnimation() {
-    var canvas      = document.getElementById("webgl");
+    var clock  = new THREE.Clock();
     
-    renderer = new THREE.WebGLRenderer({canvas: canvas});
-    canvas.width  = canvas.clientWidth;
-    canvas.height = canvas.clientHeight;
-    renderer.setViewport(0, 0, canvas.clientWidth, canvas.clientHeight);
+    var renderer = new THREE.WebGLRenderer();
+    document.body.appendChild(renderer.domElement);
     
-    panoRender = new PanoramaRender(renderer, true);
+    panoRender = new FullDomeRenderer(renderer, true);
     
     // Call the user routine to setup the scene
     var scene  = new THREE.Scene();
@@ -129,20 +130,21 @@ function startAnimation() {
     
     // The animation routine
     function animate() {
-        animateScene(scene);
+        animateScene(clock.getDelta(), scene);
         panoRender.render(scene);
         requestAnimationFrame( animate );
     }
     
     // The resize handler
     function onWindowResize() {
-        canvas.width  = canvas.clientWidth;
-        canvas.height = canvas.clientHeight;
-        renderer.setViewport(0, 0, canvas.clientWidth, canvas.clientHeight);
-        panoRender.setSize(canvas.clientWidth, canvas.clientHeight);
+        var width  = window.innerWidth;
+        var height = window.innerHeight;
+        panoRender.setSize(width, height);
+        renderer.setSize(width, height);
     }
     window.addEventListener( 'resize', onWindowResize, false );
     
     // Begin the animation
     animate();
+    onWindowResize();
 }
