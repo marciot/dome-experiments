@@ -3,19 +3,21 @@
 THREE.js Dome Experiments
 =========================
 
-This repository contains experiments in building THREE.js content for [DomeLab]. Click this [link](http://marciot.com/dome-experiments) for online demonstrations.
+This repository contains experiments in building THREE.js content for [DomeLab].
+
+Click this [link](http://marciot.com/dome-experiments) for online demonstrations.
 
 ## How to see the demos:
 
-Dome projection can be done by using [CefWithSyphon] and [Blendy Dome VJ]. If you do not have these, you can also see the demos in VR.
+Dome projection can be done by using [CefWithSyphon] and [Blendy Dome VJ]. If you do not have these, you can also see the demos on your PC or smartphone.
 
 ## Supported VR Headsets:
 
 The two WebVR renderers should work on all major headsets, including Cardboard.
 
-'''GearVR:''' You must download the [Samsung Internet Browser for Gear VR] from the ''Oculus Store'' Android app. You must then visit this demo page while in VR mode.
+__GearVR:__ You must download the [Samsung Internet Browser for Gear VR] from the _Oculus Store_ Android app. You must then visit this demo page while in VR mode.
 
-'''Oculus Rift and HTC Vive:''' Rift and Vive users must visit this page using an experimental [WebVR] version of [Chrome] or [Firefox].
+__Oculus Rift and HTC Vive:__ Rift and Vive users must visit this page using an experimental [WebVR] version of [Chrome] or [Firefox].
         
 ## Resources:
 
@@ -44,3 +46,4 @@ Please visit my [Patreon page] to learn how you can support this open-source pro
 [Samsung Internet Browser for Gear VR]: https://www.oculus.com/experiences/gear-vr/849609821813454/
 [Chrome]: https://webvr.info/get-chrome/
 [Firefox]: https://mozvr.com/
+[Patreon page]: https://www.patreon.com/marciot
