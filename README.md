@@ -3,17 +3,9 @@
 Dome Experiments
 ================
 
-This repository contains experiments in building content for [DomeLab]. Please follow this link for the online demos:
+This repository contains experiments in buildingTHREE.js content for [DomeLab]. Please follow this link for the online demos:
 
-[online demo](http://marciot.com/dome-experiments)
-
-## Licensing:
-
-I am a strong believer in open source. As such, this code has been released under the Affero GPL license.
-
-## How can you help this project?
-
-Please visit my [Patreon page] to learn how you can support this open-source project with a donation!
+[online demos](http://marciot.com/dome-experiments)
 
 ## Supported VR Headsets:
 
@@ -31,8 +23,15 @@ The two WebVR renderers should work on all major headsets, including Cardboard.
 * [WebVR Polyfill] - Information on the WebVR polyfil used in the renderers
 * [THREE.js] - The JavaScript graphics library used in these demos
 
+## Licensing:
 
-[logo]: https://github.com/marciot/dome-experiments/raw/master/artwork/banner.jpg "A dome picture"
+I am a strong believer in open source. As such, this code has been released under the Affero GPL license.
+
+## How can you help this project?
+
+Please visit my [Patreon page] to learn how you can support this open-source project with a donation!
+
+[logo]: https://github.com/marciot/dome-experiments/raw/master/images/banner.jpg "A dome picture"
 [DomeLab]: https://www.facebook.com/groups/DomeLab
 [THREE.CubemapToEquirectangular]: https://github.com/spite/THREE.CubemapToEquirectangular
 [CefWithSyphon]: https://github.com/vibber/CefWithSyphon
