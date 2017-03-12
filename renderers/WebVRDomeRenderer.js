@@ -12,6 +12,7 @@ WebVRDomeConfig = {
     eyeHeight:              46.0 * inchesToMeters,
     seats: {
         visible:            true,
+        teleportGazeTime:   3.0, // in seconds, -1 to disable
         cushion: {
             width:          17.0 * inchesToMeters,
             depth:          17.0 * inchesToMeters,
@@ -121,8 +122,16 @@ function WebVRDomeRenderer( renderer ) {
         light.position.set( 0, 15, 0 );
         this.scene.add(light);
 
-        var seatMaterial = new THREE.MeshLambertMaterial();
-        placeSeats(this.scene, seatMaterial);
+        this.seatMaterial = new THREE.MeshLambertMaterial();
+        this.seats = new THREE.Object3D();
+        placeSeats(this.seats, this.seatMaterial);
+        this.scene.add(this.seats);
+
+        this.selectedMaterial = new THREE.MeshLambertMaterial({color: 0xFF00FF});
+
+        if(WebVRDomeConfig.seats.teleportGazeTime > 0) {
+            this.enableTeleportation();
+        }
     }
 
     /* The cube camera snaps a 360 picture of the user's scene into a cube texture */
@@ -137,7 +146,7 @@ function WebVRDomeRenderer( renderer ) {
     this.cubeCamera.position.y = WebVRDomeConfig.eyeHeight;
 }
 
-WebVRDomeRenderer.prototype.update = function( scene ) {
+WebVRDomeRenderer.prototype.update = function(dt, scene ) {
     /* Step 1: Render the user's scene to the CubeCamera's texture */
     var autoClear = this.renderer.autoClear;
     this.renderer.autoClear = true;
@@ -146,6 +155,37 @@ WebVRDomeRenderer.prototype.update = function( scene ) {
 
     /* Step 2: Assign the CubeCamera's texture to the dome's fragment shader */
     this.dome.material.uniforms.map.value = this.cubeCamera.renderTarget.texture;
+
+    /* Step 3: Track the user's gaze to allow them to choose a new seat */
+    if(this.raycastingFunction) {
+        this.raycastingFunction(dt);
+    }
+}
+
+WebVRDomeRenderer.prototype.enableTeleportation = function(camera) {
+    var raycaster    = new THREE.Raycaster();
+    var gazePoint    = new THREE.Vector2(0,0);
+    var lastSelected = null;
+    var gazeTime     = 0;
+    var me = this;
+    this.raycastingFunction = function(dt) {
+        raycaster.setFromCamera( gazePoint, camera );
+        var intersects = raycaster.intersectObject(me.seats, true);
+        if (intersects.length) {
+            var nowSelected = intersects[0].object;
+            nowSelected.material = me.selectedMaterial;
+            gazeTime += dt;
+            if(gazeTime > WebVRDomeConfig.seats.teleportGazeTime) {
+                camera.position.x = nowSelected.position.x;
+                camera.position.z = nowSelected.position.z;
+            }
+        }
+        if(lastSelected && nowSelected !== lastSelected) {
+            lastSelected.material = me.seatMaterial;
+            gazeTime = 0;
+        }
+        lastSelected = nowSelected;
+    }
 }
 
 /* Function that generates geometry for the seats */
@@ -172,7 +212,7 @@ function getSeatGeometry() {
     return geometry;
 }
 
-function placeSeats(scene, seatMaterial) {
+function placeSeats(obj, seatMaterial) {
     const d                 = WebVRDomeConfig;
     const s                 = WebVRDomeConfig.seats;
     const c                 = WebVRDomeConfig.seats.cushion;
@@ -194,7 +234,7 @@ function placeSeats(scene, seatMaterial) {
                 mesh.position.x = x;
                 mesh.position.z = z;
                 mesh.lookAt(arcCenter);
-                scene.add(mesh);
+                obj.add(mesh);
             }
         }
     }
@@ -265,8 +305,9 @@ function startAnimation() {
     function animate() {
         updatePoseAndOrientation();
         
-        animateScene(clock.getDelta(), scene);
-        domeRenderer.update(scene);
+        var dt = clock.getDelta();
+        animateScene(dt, scene);
+        domeRenderer.update(dt, scene);
         
         effect.render(domeRenderer.scene, camera);
         vrDisplay.requestAnimationFrame(animate);
@@ -308,6 +349,7 @@ function startAnimation() {
     });
     
     onWindowResize();
+    domeRenderer.enableTeleportation(camera);
 }
 
 WebVRConfig.ALWAYS_APPEND_POLYFILL_DISPLAY = true;
