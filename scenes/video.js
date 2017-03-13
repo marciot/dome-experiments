@@ -12,11 +12,18 @@ function setupScene(scene) {
     video.width  = 1024;
     video.height =  640;
     video.loop   = true;
-    video.muted  = false;
+    video.muted  = true;
     video.src = "../textures/Spherible- Purp Cycle.mp4";
     video.setAttribute( 'webkit-playsinline', 'webkit-playsinline' );
+    video.setAttribute( 'playsinline', 'playsinline' );
     video.play();
     
+    // iOS require the video to start muted in order for it to autoplay, so we use a click
+    // to enable the sound.
+    document.getElementsByTagName("canvas")[0].addEventListener("click",
+        function() {video.muted = false}
+    );
+
     var texture = new THREE.VideoTexture( video );
     texture.minFilter = THREE.LinearFilter;
     texture.format = THREE.RGBFormat;
