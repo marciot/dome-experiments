@@ -3,6 +3,12 @@
  *   https://github.com/spite/THREE.CubemapToEquirectangular
  */
 
+const inchesToMeters     = 0.0254;
+
+FullDomeConfig = {
+    eyeHeight:              46.0 * inchesToMeters
+};
+
 var vertexShader = 
 "attribute vec3 position;\n" +
 "attribute vec2 uv;\n" +
@@ -57,8 +63,6 @@ function FullDomeRenderer( renderer ) {
         side: THREE.DoubleSide
     } );
     
-    const eyeHeightInMeters    = 1.7;
-    
     this.scene = new THREE.Scene();
     this.quad = new THREE.Mesh(
         new THREE.PlaneBufferGeometry(1, 1),
@@ -83,7 +87,7 @@ function FullDomeRenderer( renderer ) {
         1000,   // Far clipping distance
         Math.min(maxSize, desiredCubeMapSize)
     );
-    this.cubeCamera.position.y = eyeHeightInMeters;
+    this.cubeCamera.position.y = FullDomeConfig.eyeHeight;
 }
 
 FullDomeRenderer.prototype.setSize = function( width, height ) {

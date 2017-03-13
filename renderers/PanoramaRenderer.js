@@ -2,6 +2,12 @@
  *
  *   https://github.com/spite/THREE.CubemapToEquirectangular
  */
+ 
+const inchesToMeters     = 0.0254;
+
+PanoramaConfig = {
+    eyeHeight:              46.0 * inchesToMeters
+};
 
 var vertexShader = 
 "attribute vec3 position;\n" +
@@ -57,8 +63,6 @@ function PanoramaRenderer( renderer ) {
         side: THREE.DoubleSide
     } );
     
-    const eyeHeightInMeters    = 1.7;
-    
     this.scene = new THREE.Scene();
     this.quad = new THREE.Mesh(
         new THREE.PlaneBufferGeometry(1, 1),
@@ -83,7 +87,7 @@ function PanoramaRenderer( renderer ) {
         1000,   // Far clipping distance
         Math.min(maxSize, desiredCubeMapSize)
     );
-    this.cubeCamera.position.y = eyeHeightInMeters;
+    this.cubeCamera.position.y = PanoramaConfig.eyeHeight;
 }
 
 PanoramaRenderer.prototype.setSize = function( width, height ) {

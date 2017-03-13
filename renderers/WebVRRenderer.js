@@ -1,6 +1,11 @@
+const inchesToMeters     = 0.0254;
+
+WebVRConfig = {
+    eyeHeight:              46.0 * inchesToMeters
+};
+
 /* Main function that kickstarts the animation loop */
 function startAnimation() {
-    const eyeHeightInMeters  = 1.7;
     var clock  = new THREE.Clock();
     
     var renderer = new THREE.WebGLRenderer();
@@ -48,7 +53,7 @@ function startAnimation() {
         if (pose.position !== null) {
             camera.position.fromArray(pose.position);
         } else {
-            camera.position.y = eyeHeightInMeters;
+            camera.position.y = WebVRConfig.eyeHeight;
         }
         if (pose.orientation !== null) {
             camera.quaternion.fromArray(pose.orientation);

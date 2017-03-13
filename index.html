@@ -54,7 +54,12 @@
         </p>
 
         <table id="demoTable">
-            <tr class="heading"><td></td><th colspan="2">WebVR Preview</th><th colspan="2">Dome Projection</th></tr>
+            <tr class="heading">
+                <td></td>
+                <th colspan="2">WebVR Preview</th>
+                <th colspan="2">Dome Projection</th>
+                <th colspan="2">Source Code</th>
+            </tr>
         </table>
 
         <!-- Fork me on github ribbon -->
@@ -70,13 +75,15 @@
                     '<td><a href="demo/?scene=' + scene + '&renderer=WebVRRenderer">WebVR</a></td>' +
                     '<td><a href="demo/?scene=' + scene + '&renderer=WebVRDomeRenderer">WebVRDome</a></td>' +
                     '<td><a href="demo/?scene=' + scene + '&renderer=PanoramaRenderer">Panorama</a></td>' +
-                    '<td><a href="demo/?scene=' + scene + '&renderer=FullDomeRenderer">FullDome</a></td>';
+                    '<td><a href="demo/?scene=' + scene + '&renderer=FullDomeRenderer">FullDome</a></td>' +
+                    '<td><a href="https://github.com/marciot/dome-experiments/tree/master/scenes/' + scene + '.js">GitHub</a></td>';
                 demos.appendChild(tr);
             }
 
             addDemo("cubes");
             addDemo("knots");
             addDemo("video");
+            addDemo("tron");
         </script>
     </body>
 </html>
