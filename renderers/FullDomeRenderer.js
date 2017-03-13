@@ -145,6 +145,32 @@ function startAnimation() {
         var height = window.innerHeight;
         panoRender.setSize(width, height);
         renderer.setSize(width, height);
+
+        // Show canvas size while resizing
+        const resizeInfoTime = 3000;
+        if(!this.resizeInfo) {
+            this.resizeInfo = document.createElement("div");
+            this.resizeInfo.style.position = "absolute";
+            this.resizeInfo.style.top      = "0px";
+            this.resizeInfo.style.left     = "0px";
+            this.resizeInfo.style.color    = "white";
+            this.resizeInfo.innerText      = width + "x" + height;
+            document.body.appendChild(this.resizeInfo);
+        }
+        function checkStillResizing() {
+            if(this.stillResizing) {
+                this.stillResizing = false;
+                window.setTimeout(checkStillResizing, resizeInfoTime);
+            } else {
+                this.resizeInfo.style.display = "none";
+            }
+        }
+        if(!this.stillResizing) {
+            window.setTimeout(checkStillResizing, resizeInfoTime);
+            this.resizeInfo.style.display = "block";
+        }
+        this.stillResizing            = true;
+        this.resizeInfo.innerText     = width + " x " + height;
     }
     window.addEventListener( 'resize', onWindowResize, false );
     
