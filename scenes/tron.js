@@ -198,13 +198,11 @@ precision mediump float;
 varying   vec2    vUv;
 
 void main()  {
-   vec2  uv        = mod(vUv * 25., 1.);
-   float thickness = 0.02;
-   float taper     = 0.01;
-   float gX =   smoothstep(0.5 - thickness - taper, 0.5 - thickness,         uv.x)
-              - smoothstep(0.5 + thickness,         0.5 + thickness + taper, uv.x);
-   float gY =   smoothstep(0.5 - thickness - taper, 0.5 - thickness,         uv.y)
-              - smoothstep(0.5 + thickness,         0.5 + thickness + taper, uv.y);
-   gl_FragColor = vec4(0., 1., 1., 1.) * (gX + gY);
+   vec2 uv        = mod(vUv * 25., 1.);
+   vec2 thickness = vec2(0.02);
+   vec2 blur      = vec2(0.01);
+   vec2 g =   smoothstep(0.5 - thickness - blur, 0.5 - thickness,         uv)
+            - smoothstep(0.5 + thickness,        0.5 + thickness + blur, uv);
+   gl_FragColor = vec4(0., 1., 1., 1.) * (g.x + g.y);
 }
 */}.getComment();
