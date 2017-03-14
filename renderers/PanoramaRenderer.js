@@ -5,7 +5,7 @@
  
 const inchesToMeters     = 0.0254;
 
-PanoramaConfig = {
+RendererConfig = {
     eyeHeight:              46.0 * inchesToMeters
 };
 
@@ -87,7 +87,8 @@ function PanoramaRenderer( renderer ) {
         1000,   // Far clipping distance
         Math.min(maxSize, desiredCubeMapSize)
     );
-    this.cubeCamera.position.y = PanoramaConfig.eyeHeight;
+    this.cubeCamera.position.y = RendererConfig.eyeHeight;
+    RendererConfig.camera = this.cubeCamera;
 }
 
 PanoramaRenderer.prototype.setSize = function( width, height ) {
@@ -134,7 +135,10 @@ function startAnimation() {
     
     // The animation routine
     function animate() {
-        animateScene(clock.getDelta(), scene);
+        var t = clock.getElapsedTime();
+        if(RendererConfig.animationCallback) {
+            RendererConfig.animationCallback(t);
+        }
         panoRender.render(scene);
         requestAnimationFrame( animate );
     }

@@ -1,8 +1,4 @@
-var boxes = [];
-
 function sphericalCoordinatesToPosition(position, azimuth, elevation, distance) {
-    const eyeHeightInMeters    = 1.7;
-    
     /* Adjust the values to make a coordinate system which makes sense for a
      * dome theater:
      *
@@ -25,10 +21,12 @@ function sphericalCoordinatesToPosition(position, azimuth, elevation, distance) 
      */
     position.z = distance * Math.sin(inclination) * Math.cos(azimuth);
     position.x = distance * Math.sin(inclination) * Math.sin(azimuth);
-    position.y = distance * Math.cos(inclination) + eyeHeightInMeters;
+    position.y = distance * Math.cos(inclination) + RendererConfig.eyeHeight;
 }
 
 function setupScene(scene) {
+    var boxes = [];
+
     const domeDiameterInMeters = 10.668;
 
     // Add lights to the scene
@@ -71,12 +69,13 @@ function setupScene(scene) {
     sphericalCoordinatesToPosition(box.position, 0, 90, domeDiameterInMeters/2);
     scene.add(box);
     boxes.push(box);
-}
 
-function animateScene(scene) {
-    boxes.forEach(
-        box => {
-            box.rotation.x += .040;
-            box.rotation.y += .025;
-    });
+    RendererConfig.animationCallback = function(t) {
+        boxes.forEach(
+            function(box) {
+                box.rotation.x = 4.0 * t;
+                box.rotation.y = 2.5 * t;
+            }
+        );
+    }
 }

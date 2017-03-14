@@ -7,7 +7,7 @@ const inchesToMeters     = 0.0254;
 const feetToMeters       = 0.3048;
 const degreesToRadians   = Math.PI / 180;
 
-WebVRDomeConfig = {
+RendererConfig = {
     domeRadius:             35.0 * feetToMeters / 2,
     eyeHeight:              46.0 * inchesToMeters,
     seats: {
@@ -104,17 +104,17 @@ function WebVRDomeRenderer( renderer ) {
 
     this.scene = new THREE.Scene();
 
-    var grid = new THREE.PolarGridHelper(WebVRDomeConfig.domeRadius);
+    var grid = new THREE.PolarGridHelper(RendererConfig.domeRadius);
     this.scene.add( grid );
 
     this.dome = new THREE.Mesh(
-        new THREE.SphereBufferGeometry(WebVRDomeConfig.domeRadius, 32, 32 ),
+        new THREE.SphereBufferGeometry(RendererConfig.domeRadius, 32, 32 ),
         this.material
     );
-    this.dome.position.y = WebVRDomeConfig.eyeHeight;
+    this.dome.position.y = RendererConfig.eyeHeight;
     this.scene.add(this.dome);
 
-    if(WebVRDomeConfig.seats.visible) {
+    if(RendererConfig.seats.visible) {
         var light = new THREE.AmbientLight( 0xffffff, 0.1 );
         this.scene.add(light);
 
@@ -129,7 +129,7 @@ function WebVRDomeRenderer( renderer ) {
 
         this.selectedMaterial = new THREE.MeshLambertMaterial({color: 0xFF00FF});
 
-        if(WebVRDomeConfig.seats.teleportGazeTime > 0) {
+        if(RendererConfig.seats.teleportGazeTime > 0) {
             this.enableTeleportation();
         }
     }
@@ -143,7 +143,8 @@ function WebVRDomeRenderer( renderer ) {
         1000,   // Far clipping distance
         Math.min(maxSize, desiredCubeMapSize)
     );
-    this.cubeCamera.position.y = WebVRDomeConfig.eyeHeight;
+    this.cubeCamera.position.y = RendererConfig.eyeHeight;
+    RendererConfig.camera = this.cubeCamera;
 }
 
 WebVRDomeRenderer.prototype.update = function(dt, scene ) {
@@ -163,26 +164,26 @@ WebVRDomeRenderer.prototype.update = function(dt, scene ) {
 }
 
 WebVRDomeRenderer.prototype.enableTeleportation = function(camera) {
-    var raycaster    = new THREE.Raycaster();
-    var gazePoint    = new THREE.Vector2(0,0);
-    var lastSelected = null;
-    var gazeTime     = 0;
+    var raycaster     = new THREE.Raycaster();
+    var gazePoint     = new THREE.Vector2(0,0);
+    var lastSelected  = null;
+    var gazeStartTime = 0;
     var me = this;
-    this.raycastingFunction = function(dt) {
+    this.raycastingFunction = function(t) {
         raycaster.setFromCamera( gazePoint, camera );
         var intersects = raycaster.intersectObject(me.seats, true);
         if (intersects.length) {
             var nowSelected = intersects[0].object;
             nowSelected.material = me.selectedMaterial;
-            gazeTime += dt;
-            if(gazeTime > WebVRDomeConfig.seats.teleportGazeTime) {
+            var gazeTime = t - gazeStartTime;
+            if(gazeTime > RendererConfig.seats.teleportGazeTime) {
                 camera.position.x = nowSelected.position.x;
                 camera.position.z = nowSelected.position.z;
             }
         }
         if(lastSelected && nowSelected !== lastSelected) {
             lastSelected.material = me.seatMaterial;
-            gazeTime = 0;
+            gazeStartTime = t;
         }
         lastSelected = nowSelected;
     }
@@ -190,9 +191,9 @@ WebVRDomeRenderer.prototype.enableTeleportation = function(camera) {
 
 /* Function that generates geometry for the seats */
 function getSeatGeometry() {
-    const s       = WebVRDomeConfig.seats;
-    const c       = WebVRDomeConfig.seats.cushion;
-    const b       = WebVRDomeConfig.seats.back;
+    const s       = RendererConfig.seats;
+    const c       = RendererConfig.seats.cushion;
+    const b       = RendererConfig.seats.back;
 
     const seat = new THREE.Mesh(new THREE.BoxGeometry(c.width, c.height, c.depth));
     const back = new THREE.Mesh(new THREE.BoxGeometry(b.width, b.height, b.depth));
@@ -213,13 +214,13 @@ function getSeatGeometry() {
 }
 
 function placeSeats(obj, seatMaterial) {
-    const d                 = WebVRDomeConfig;
-    const s                 = WebVRDomeConfig.seats;
-    const c                 = WebVRDomeConfig.seats.cushion;
+    const d                 = RendererConfig;
+    const s                 = RendererConfig.seats;
+    const c                 = RendererConfig.seats.cushion;
     const minSeatsInArc     = 30;
     const minSeatArcRadius  = c.width * minSeatsInArc / Math.PI / 2;
     const seatRowSpacing    = c.depth + s.legRoom;
-    const posInTheater      = (x,z) => Math.sqrt(x*x + z*z) < (d.domeRadius - d.outsideWalkwayWidth);
+    const posInTheater      = function(x,z) {return Math.sqrt(x*x + z*z) < (d.domeRadius - d.outsideWalkwayWidth);}
     const seatGeometry      = getSeatGeometry();
     var   arcCenter         = new THREE.Vector3();
     for(var x, z, r = minSeatArcRadius; r < (1 + d.seatArcMultiplier) * d.domeRadius; r += seatRowSpacing) {
@@ -294,7 +295,7 @@ function startAnimation() {
         if (pose.position !== null) {
             camera.position.fromArray(pose.position);
         } else {
-            camera.position.y = WebVRDomeConfig.eyeHeight;
+            camera.position.y = RendererConfig.eyeHeight;
         }
         if (pose.orientation !== null) {
             camera.quaternion.fromArray(pose.orientation);
@@ -305,9 +306,11 @@ function startAnimation() {
     function animate() {
         updatePoseAndOrientation();
         
-        var dt = clock.getDelta();
-        animateScene(dt, scene);
-        domeRenderer.update(dt, scene);
+        var t = clock.getElapsedTime();
+        if(RendererConfig.animationCallback) {
+            RendererConfig.animationCallback(t);
+        }
+        domeRenderer.update(t, scene);
         
         effect.render(domeRenderer.scene, camera);
         vrDisplay.requestAnimationFrame(animate);

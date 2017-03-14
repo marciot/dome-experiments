@@ -1,6 +1,6 @@
 const inchesToMeters     = 0.0254;
 
-WebVRConfig = {
+RendererConfig = {
     eyeHeight:              46.0 * inchesToMeters
 };
 
@@ -14,6 +14,7 @@ function startAnimation() {
     var effect = new THREE.VREffect(renderer);
     
     var camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 0.001, 700 );
+    RendererConfig.camera = camera;
     
     // Inititalize WebVR
     
@@ -53,7 +54,7 @@ function startAnimation() {
         if (pose.position !== null) {
             camera.position.fromArray(pose.position);
         } else {
-            camera.position.y = WebVRConfig.eyeHeight;
+            camera.position.y = RendererConfig.eyeHeight;
         }
         if (pose.orientation !== null) {
             camera.quaternion.fromArray(pose.orientation);
@@ -63,7 +64,10 @@ function startAnimation() {
     // The animation routine
     function animate() {
         updatePoseAndOrientation();
-        animateScene(clock.getDelta(), scene);
+        var t = clock.getElapsedTime();
+        if(RendererConfig.animationCallback) {
+            RendererConfig.animationCallback(t);
+        }
         effect.render(scene, camera);
         vrDisplay.requestAnimationFrame(animate);
     }

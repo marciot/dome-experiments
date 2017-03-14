@@ -3,19 +3,12 @@
  *
  *    https://vimeo.com/97887646
  */
-const separation = 100;
-var   world, texLoader;
-var   t = 0;
-var   tori = [];
-
 function setupScene(scene) {
-
-    const eyeHeight = (
-        window.WebVRDomeConfig ||
-        window.PanoramaConfig ||
-        window.FullDomeConfig ||
-        window.WebVRConfig).eyeHeight;
     
+    const ringSeparation = 100;
+    const animationSpeed = 0.2;
+
+    // The scene lighting.
     var light = new THREE.AmbientLight( 0x555555 );
     scene.add(light);
     
@@ -23,50 +16,121 @@ function setupScene(scene) {
     light.position.set( 10, 15, 20 );
     scene.add(light);
     
-    // The lens flare.
-    var material = new THREE.ShaderMaterial( {
-        vertexShader:   flareVertexShader,
-        fragmentShader: flareFragmentShader,
-        depthTest: false,
-        blending: THREE.AdditiveBlending,
-        transparent: true
-    } );
-    var geometry = new THREE.CircleBufferGeometry( 0.6, 25 );
-    var flare = new THREE.Mesh( geometry, material );
-    flare.position.z = -2;
-    flare.position.y = eyeHeight;
-    scene.add( flare );
-    
-    world     = new THREE.Object3D();
-    texLoader = new THREE.TextureLoader();
+    /* The lens flare. We attach the flare to the camera,
+     * the camera to the scene, so that the flare moves
+     * with the camera. */
+    var flare = new LensFlare(0, 0, -2);
+    RendererConfig.camera.add( flare.obj );
+    scene.add(RendererConfig.camera);
 
-    // The floor.
-    var material = new THREE.ShaderMaterial( {
-        vertexShader:   gridVertexShader,
-        fragmentShader: gridFragmentShader
-    } );
-    var geometry = new THREE.PlaneBufferGeometry(500, 500);
-    //var texture = getTronMaterial('../textures/tron0.png', 50);
-    mesh = new THREE.Mesh(geometry, material);
-    mesh.rotation.x = -Math.PI/2;
-    mesh.position.y = 0;
-    world.add(mesh);
+    /* The floor. */
+    var floor = new GridFloor(0, 0, 0);
+    scene.add(floor.obj);
     
-    // The tori.
-    
-    var geometry = new THREE.TorusBufferGeometry(5, 1, 8, 40);
+    /* The rings. I position the rings at eye level so the flare
+     * (which is closer to the camera) lines up with the rings */
     for(var i = -5; i < 5; i++) {
-        mesh = new THREE.Mesh( geometry, getTronMaterial('../textures/tron1.png') );
-        mesh.position.z = -i * separation;
-        mesh.position.y = eyeHeight;
-        world.add(mesh);
-        tori.push(mesh);
+        var ring = new TronRing(0, RendererConfig.eyeHeight, i * ringSeparation);
+        scene.add(ring.obj);
     }
-    scene.add(world);
+
+    /* The light pillars */
+    var pillar;
+    for(var i = -5; i < 5; i++) {
+        pillar = new LightPillar(15, 0, (-i + 0.5) * ringSeparation);
+        scene.add(pillar.obj);
+    }
+
+    RendererConfig.animationCallback = function(t) {
+        RendererConfig.camera.position.z = -((t * animationSpeed) % 2) * ringSeparation;
+        TronRing.animate(t);
+    }
+}
+
+function LensFlare(x, y, z) {
+    if(!LensFlare.staticData) {
+        LensFlare.staticData = {
+            geometry: new THREE.CircleBufferGeometry( 0.6, 25 ),
+            material: new THREE.ShaderMaterial( {
+                vertexShader:   flareVertexShader,
+                fragmentShader: flareFragmentShader,
+                depthTest: false,
+                blending: THREE.AdditiveBlending,
+                transparent: true
+            } )
+        }
+    }
+
+    var flare = new THREE.Mesh(LensFlare.staticData.geometry, LensFlare.staticData.material);
+    flare.position.set(x, y, z);
+    this.obj = flare;
+}
+
+function GridFloor(x, y, z) {
+    if(!GridFloor.staticData) {
+        GridFloor.staticData = {
+            geometry: new THREE.PlaneBufferGeometry(500, 500),
+            material: new THREE.ShaderMaterial( {
+                vertexShader:   gridVertexShader,
+                fragmentShader: gridFragmentShader
+            } )
+        }
+    }
+    var mesh = new THREE.Mesh(GridFloor.staticData.geometry, GridFloor.staticData.material);
+    mesh.rotation.x = -Math.PI/2;
+    mesh.position.set(x, y, z);
+    this.obj = mesh;
+}
+
+function TronRing(x, y, z) {
+    if(!TronRing.staticData) {
+        TronRing.staticData = {
+            geometry: new THREE.TorusBufferGeometry(5, 1, 8, 40),
+            material: getTronMaterial('../textures/tron1.png'),
+            rings: []
+        }
+    }
+
+    var ring = new THREE.Mesh(TronRing.staticData.geometry, TronRing.staticData.material);
+    this.obj = new THREE.Object3D();
+    this.obj.position.set(x, y, z);
+    this.obj.add(ring);
+
+    TronRing.staticData.rings.push(this.obj);
+
+    TronRing.animate = function(t) {
+        TronRing.staticData.rings.forEach(function(r,i) {r.rotation.z = t * ((i % 2) ? 1 : -1)});
+    }
+}
+
+function LightPillar(x, y, z) {
+    const baseHeight = 15;
+
+    if(!LightPillar.staticData) {
+        LightPillar.staticData = {
+            geometry: new THREE.CylinderBufferGeometry(2, 2, baseHeight),
+            baseMaterial: getTronMaterial('../textures/tron1.png'),
+            beamMaterial: new THREE.MeshBasicMaterial({color: 0xFFFF00})
+        }
+    }
+
+    var base = new THREE.Mesh(LightPillar.staticData.geometry, LightPillar.staticData.baseMaterial);
+    var beam = new THREE.Mesh(LightPillar.staticData.geometry, LightPillar.staticData.beamMaterial);
+    beam.scale.set(0.6, 30, 0.6);
+    base.position.y = baseHeight/2;
+    beam.position.y = baseHeight/2;
+
+    this.obj = new THREE.Object3D();
+    this.obj.position.set(x, y, z);
+    this.obj.add(base);
+    this.obj.add(beam);
 }
 
 function getTronMaterial(url, repeat) {
-    var texture  = texLoader.load(url);
+    if(!this.texureLoader) {
+        this.texureLoader = new THREE.TextureLoader();
+    }
+    var texture  = this.texureLoader.load(url);
     texture.magFilter = THREE.NearestFilter;
     texture.minFilter = THREE.LinearMipMapLinearFilter;
     if(repeat) {
@@ -79,17 +143,6 @@ function getTronMaterial(url, repeat) {
         emissiveMap: texture,
         emissive:    0xFFFFFF
     });
-}
-
-function animateScene(dt, scene) {
-    const speed = 0.2;
-    
-    t += dt;
-    world.position.z = ((t * speed) % 2) * separation;
-    
-    for(var i = 0; i < tori.length; i++) {
-        tori[i].rotation.z += dt * ((i % 2) ? 1 : -1);
-    }
 }
 
 var flareVertexShader = 

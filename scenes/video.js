@@ -21,7 +21,7 @@ function setupScene(scene) {
     // iOS require the video to start muted in order for it to autoplay, so we use a click
     // to enable the sound.
     document.getElementsByTagName("canvas")[0].addEventListener("click",
-        function() {video.muted = false}
+        function() {video.muted = false;}
     );
 
     var texture = new THREE.VideoTexture( video );
@@ -38,9 +38,6 @@ function setupScene(scene) {
     credit.position.z = -8;
     credit.position.y = 1;
     scene.add(credit);
-}
-
-function animateScene(dt, scene) {
 }
 
 function getTextElement(text, scale) {

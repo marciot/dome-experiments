@@ -1,8 +1,4 @@
-var knots = [];
-
 function sphericalCoordinatesToPosition(position, azimuth, elevation, distance) {
-    const eyeHeightInMeters    = 1.7;
-    
     /* Adjust the values to make a coordinate system which makes sense for a
      * dome theater:
      *
@@ -25,7 +21,7 @@ function sphericalCoordinatesToPosition(position, azimuth, elevation, distance) 
      */
     position.z = distance * Math.sin(inclination) * Math.cos(azimuth);
     position.x = distance * Math.sin(inclination) * Math.sin(azimuth);
-    position.y = distance * Math.cos(inclination) + eyeHeightInMeters;
+    position.y = distance * Math.cos(inclination) + RendererConfig.eyeHeight;
 }
 
 function circumferenceAtElevation(elevation, distance) {
@@ -34,6 +30,7 @@ function circumferenceAtElevation(elevation, distance) {
 
 function setupScene(scene) {
     const domeDiameterInMeters = 10.668;
+    var knots = [];
 
     var light = new THREE.AmbientLight( 0x555555 );
     scene.add(light);
@@ -65,18 +62,17 @@ function setupScene(scene) {
         knots.push(obj);
         scene.add(obj);
     }
-}
 
-function animateScene(dt, scene) {
-    for(var i = 0; i < knots.length; i++) {
-        var knot = knots[i];
-        var f    = (i+1)/knots.length - 0.5;
-        
-        // Tumble the knot itself
-        knot.children[0].rotation.x += .40 * dt * f;
-        knot.children[0].rotation.y += .25 * dt * f;
-        
-        // Orbit the knot around dome
-        knot.rotation.y += .25 * f * dt;
+    RendererConfig.animationCallback = function(t) {
+        knots.forEach(function(k,i) {
+            var f    = (i+1)/knots.length - 0.5;
+
+            // Tumble the knot itself
+            k.children[0].rotation.x = 4.0 * t * f;
+            k.children[0].rotation.y = 2.5 * t * f;
+
+            // Orbit the knot around dome
+            k.rotation.y = 2.5 * f * t;
+        });
     }
 }
