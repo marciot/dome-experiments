@@ -52,8 +52,8 @@ function LensFlare(x, y, z) {
         LensFlare.staticData = {
             geometry: new THREE.CircleBufferGeometry( 0.6, 25 ),
             material: new THREE.ShaderMaterial( {
-                vertexShader:   flareVertexShader,
-                fragmentShader: flareFragmentShader,
+                vertexShader:   LensFlare.vertexShader,
+                fragmentShader: LensFlare.fragmentShader,
                 depthTest: false,
                 blending: THREE.AdditiveBlending,
                 transparent: true
@@ -71,8 +71,8 @@ function GridFloor(x, y, z) {
         GridFloor.staticData = {
             geometry: new THREE.PlaneBufferGeometry(500, 500),
             material: new THREE.ShaderMaterial( {
-                vertexShader:   gridVertexShader,
-                fragmentShader: gridFragmentShader
+                vertexShader:   GridFloor.vertexShader,
+                fragmentShader: GridFloor.fragmentShader
             } )
         }
     }
@@ -150,7 +150,7 @@ function getTronMaterial(url, repeat) {
  *   http://stackoverflow.com/questions/805107/creating-multiline-strings-in-javascript
  */
 
-var flareVertexShader = function() {/*!
+LensFlare.vertexShader = function() {/*!
 varying vec2 vUv;
 
 void main() {
@@ -159,7 +159,7 @@ void main() {
 }
 */}.getComment();
 
-var flareFragmentShader = function() {/*!
+LensFlare.fragmentShader = function() {/*!
 precision mediump float;
 varying   vec2    vUv;
 
@@ -184,7 +184,7 @@ void main()  {
 }
 */}.getComment();
 
-var gridVertexShader = function() {/*!
+GridFloor.vertexShader = function() {/*!
 varying vec2 vUv;
 
 void main() {
@@ -193,7 +193,7 @@ void main() {
 }
 */}.getComment();
 
-var gridFragmentShader = function() {/*!
+GridFloor.fragmentShader = function() {/*!
 precision mediump float;
 varying   vec2    vUv;
 

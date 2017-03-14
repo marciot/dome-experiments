@@ -62,7 +62,7 @@ Function.prototype.getComment = function() {
     return str.slice(start + startComment.length, -(str.length - end));
 };
 
-var vertexShader = function() {/*!
+WebVRDomeRenderer.vertexShader = function() {/*!
 attribute vec3 position;
 attribute vec2 uv;
 uniform   mat4 projectionMatrix;
@@ -74,7 +74,7 @@ void main() {
 }
 */}.getComment();
 
-var fragmentShader = function() {/*!
+WebVRDomeRenderer.fragmentShader = function() {/*!
 precision mediump     float;
 uniform   samplerCube map;
 varying   vec2        vUv;
@@ -109,8 +109,8 @@ function WebVRDomeRenderer( renderer ) {
         uniforms: {
             map: { type: 't', value: null }
         },
-        vertexShader: vertexShader,
-        fragmentShader: fragmentShader,
+        vertexShader:   WebVRDomeRenderer.vertexShader,
+        fragmentShader: WebVRDomeRenderer.fragmentShader,
         side: THREE.DoubleSide
     } );
 
