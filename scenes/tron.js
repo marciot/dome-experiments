@@ -145,58 +145,66 @@ function getTronMaterial(url, repeat) {
     });
 }
 
-var flareVertexShader = 
-"varying vec2 vUv;\n" +
-"void main() {\n" +
-"   vUv = vec2( 1.- uv.x, uv.y );\n" +
-"   gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );\n" +
-"}\n";
+/* I am using a multi-line functional comment trick for embedding GLSL code legibly.
+ *
+ *   http://stackoverflow.com/questions/805107/creating-multiline-strings-in-javascript
+ */
 
-var flareFragmentShader =
-"precision mediump float;\n" +
+var flareVertexShader = function() {/*!
+varying vec2 vUv;
 
-"varying vec2 vUv;\n" +
+void main() {
+    vUv = uv;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+}
+*/}.getComment();
 
-"#define M_PI 3.1415926535897932384626433832795\n" +
+var flareFragmentShader = function() {/*!
+precision mediump float;
+varying   vec2    vUv;
 
-"float noise(float a) {\n" +
-"   return \n" +
-"     + sin(a *  16.) * 0.12\n" +
-"     - sin(a *   8.) * 0.3\n" +
-"     - sin(a *   4.) * 0.3\n" +
-"     - sin(a *   2.) * 0.3\n" +
-"     - sin(a *   1.) * 0.3\n" +
-";}\n" +
+float noise(float a) {
+   return
+     + sin(a *  16.) * 0.12
+     - sin(a *   8.) * 0.3
+     - sin(a *   4.) * 0.3
+     - sin(a *   2.) * 0.3
+     - sin(a *   1.) * 0.3
+;}
 
-"void main()  {\n" +
+void main()  {
+    vec2 uv = (vUv - vec2(0.5, 0.5)) * 2.;
 
-"   vec2 uv = (vUv - vec2(0.5, 0.5)) * 2.;\n" +
+    float a      = atan(uv.x,uv.y);
+    float r      = 1. - length(uv);
+    float white  = pow(0.05 + 1.0 * r, 2.);
+    float purple = pow(0.75 * noise(a), 3.) * r;
+    gl_FragColor = pow(r, 3.) * (vec4(1., 1., 1., 1.) * white +
+                                 vec4(1., 0., 1., 1.) * purple);
+}
+*/}.getComment();
 
-"   float a         = atan(uv.x,uv.y);\n" +
-"   float r         = 1. - length(uv);\n" +
-"   float white     = pow(0.05 + 1.0 * r, 2.);\n" +
-"   float purple    = pow(0.75 * noise(a), 3.) * r;\n" +
-"   gl_FragColor    = (vec4(1., 1., 1., 1.) * white + vec4(1., 0., 1., 1.) * purple) * pow(r, 3.);\n" +
+var gridVertexShader = function() {/*!
+varying vec2 vUv;
 
-"}\n";
+void main() {
+   vUv         = uv;
+   gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+}
+*/}.getComment();
 
-var gridVertexShader = 
-"varying vec2 vUv;\n" +
-"void main() {\n" +
-"   vUv = uv;\n" +
-"   gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );\n" +
-"}\n";
+var gridFragmentShader = function() {/*!
+precision mediump float;
+varying   vec2    vUv;
 
-var gridFragmentShader =
-"precision mediump float;\n" +
-
-"varying vec2 vUv;\n" +
-
-"void main()  {\n" +
-"   vec2 uv = mod(vUv * 25., 1.);" +
-"   float thickness = 0.02;" +
-"   float taper     = 0.01;" +
-"   float gX = smoothstep(0.5 - thickness - taper, 0.5 - thickness, uv.x) - smoothstep(0.5 + thickness, 0.5 + thickness + taper, uv.x);" +
-"   float gY = smoothstep(0.5 - thickness - taper, 0.5 - thickness, uv.y) - smoothstep(0.5 + thickness, 0.5 + thickness + taper, uv.y);" +
-"   gl_FragColor = vec4(0., 1., 1., 1.) * (gX + gY);\n" +
-"}\n";
+void main()  {
+   vec2  uv        = mod(vUv * 25., 1.);
+   float thickness = 0.02;
+   float taper     = 0.01;
+   float gX =   smoothstep(0.5 - thickness - taper, 0.5 - thickness,         uv.x)
+              - smoothstep(0.5 + thickness,         0.5 + thickness + taper, uv.x);
+   float gY =   smoothstep(0.5 - thickness - taper, 0.5 - thickness,         uv.y)
+              - smoothstep(0.5 + thickness,         0.5 + thickness + taper, uv.y);
+   gl_FragColor = vec4(0., 1., 1., 1.) * (gX + gY);
+}
+*/}.getComment();

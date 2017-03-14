@@ -4,6 +4,20 @@ RendererConfig = {
     eyeHeight:              46.0 * inchesToMeters
 };
 
+/* Trick for inline strings for GLSL code:
+     http://stackoverflow.com/questions/805107/creating-multiline-strings-in-javascript
+ */
+Function.prototype.getComment = function() {
+    var startComment = "/*!";
+    var endComment = "*/";
+    var str = this.toString();
+
+    var start = str.indexOf(startComment);
+    var end = str.lastIndexOf(endComment);
+
+    return str.slice(start + startComment.length, -(str.length - end));
+};
+
 /* Main function that kickstarts the animation loop */
 function startAnimation() {
     var clock  = new THREE.Clock();

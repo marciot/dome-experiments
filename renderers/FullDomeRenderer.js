@@ -9,42 +9,54 @@ RendererConfig = {
     eyeHeight:              46.0 * inchesToMeters
 };
 
-var vertexShader = 
-"attribute vec3 position;\n" +
-"attribute vec2 uv;\n" +
-"uniform mat4 projectionMatrix;\n" +
-"uniform mat4 modelViewMatrix;\n" +
-"varying vec2 vUv;\n" +
-"void main() {\n" +
-"   vUv = vec2( 1.- uv.x, uv.y );\n" +
-"   gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );\n" +
-"}\n";
+/* Trick for inline strings for GLSL code:
+     http://stackoverflow.com/questions/805107/creating-multiline-strings-in-javascript
+ */
+Function.prototype.getComment = function() {
+    var startComment = "/*!";
+    var endComment = "*/";
+    var str = this.toString();
 
-var fragmentShader =
-"precision mediump float;\n" +
-"uniform samplerCube map;\n" +
+    var start = str.indexOf(startComment);
+    var end = str.lastIndexOf(endComment);
 
-"varying vec2 vUv;\n" +
+    return str.slice(start + startComment.length, -(str.length - end));
+};
 
-"#define M_PI 3.1415926535897932384626433832795\n" +
+var vertexShader = function() {/*!
+attribute vec3 position;
+attribute vec2 uv;
+uniform   mat4 projectionMatrix;
+uniform   mat4 modelViewMatrix;
+varying   vec2 vUv;
+void main() {
+    vUv         = vec2( 1.- uv.x, uv.y );
+    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+}
+*/}.getComment();
 
-"void main()  {\n" +
+var fragmentShader = function() {/*!
+precision mediump     float;
+uniform   samplerCube map;
+varying   vec2        vUv;
 
-"   vec2 uv = vUv - vec2(0.5, 0.5);\n" +
+#define M_PI 3.1415926535897932384626433832795
 
-"   float longitude =  atan(uv.x,uv.y);\n" +
-"   float latitude =   length(uv) * M_PI;\n" +
+void main()  {
+    vec2 uv         = vUv - vec2(0.5, 0.5);
+    float longitude = atan(uv.x,uv.y);
+    float latitude  = length(uv) * M_PI;
 
-"   vec3 dir = vec3(\n" +
-"       - sin( longitude ) * sin( latitude ),\n" +
-"       cos( latitude ),\n" +
-"       - cos( longitude ) * sin( latitude )\n" +
-"   );\n" +
-"   normalize( dir );\n" +
+    vec3 dir = vec3(
+        -sin( longitude ) * sin( latitude ),
+         cos( latitude ),
+        -cos( longitude ) * sin( latitude )
+    );
+    normalize( dir );
 
-"   gl_FragColor = vec4( textureCube( map, dir ).rgb, 1. );\n" +
-
-"}\n";
+    gl_FragColor = vec4( textureCube( map, dir ).rgb, 1. );
+}
+*/}.getComment();
 
 function FullDomeRenderer( renderer ) {
     const desiredCubeMapSize = 2048;
