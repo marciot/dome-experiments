@@ -24,8 +24,10 @@ function loadResource(filename, async){
         var fileref = document.createElement('script')
         fileref.setAttribute("type","text/javascript")
         fileref.setAttribute("src", filename)
-        if(async) {
-            fileref.setAttribute("async", "async")
+        if(async == "defer") {
+            fileref.setAttribute("defer", "defer");
+        } else if(async) {
+            fileref.setAttribute("async", "async");
         }
     } else if (endsWith(filename, ".css") || endsWith(filename, ".css.gz")) {
         //if filename is an external CSS file
