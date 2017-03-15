@@ -37,15 +37,18 @@ function setupScene(scene) {
     /* The light pillars */
     var pillar;
     for(var i = -5; i < 5; i++) {
-        pillar = new LightPillar(15, 0, (-i + 0.5) * ringSeparation);
+        pillar = new LightPillar(20, 0, (-i + 0.5) * ringSeparation);
         scene.add(pillar.obj);
     }
 
     RendererConfig.animationCallback = function(t) {
         RendererConfig.camera.position.z = -((t * animationSpeed) % 2) * ringSeparation;
         TronRing.animate(t);
+        LightPillar.animate(t);
     }
 }
+
+var texureLoader = new THREE.TextureLoader();
 
 function LensFlare(x, y, z) {
     if(!LensFlare.staticData) {
@@ -97,40 +100,75 @@ function TronRing(x, y, z) {
     this.obj.add(ring);
 
     TronRing.staticData.rings.push(this.obj);
-
-    TronRing.animate = function(t) {
-        TronRing.staticData.rings.forEach(function(r,i) {r.rotation.z = t * ((i % 2) ? 1 : -1)});
-    }
 }
 
+TronRing.animate = function(t) {
+    TronRing.staticData.rings.forEach(function(r,i) {r.rotation.z = t * ((i % 2) ? 1 : -1)});
+}
+
+LightPillar.baseHeight = 20;
+
 function LightPillar(x, y, z) {
-    const baseHeight = 15;
 
     if(!LightPillar.staticData) {
         LightPillar.staticData = {
-            geometry: new THREE.CylinderBufferGeometry(2, 2, baseHeight),
-            baseMaterial: getTronMaterial('../textures/tron1.png'),
-            beamMaterial: new THREE.MeshBasicMaterial({color: 0xFFFF00})
+            geometry: new THREE.CylinderBufferGeometry(3, 3, LightPillar.baseHeight, 32),
+            ringMaterial: new THREE.ShaderMaterial( {
+                vertexShader:   LightPillar.vertexShader,
+                fragmentShader: LightPillar.fragmentShader,
+                uniforms: {
+                    time:     {value: 1.0 },
+                    texture1: {value: texureLoader.load('../textures/tron2.png')}
+                },
+                transparent: true,
+                side: THREE.DoubleSide
+            } ),
+            beamMaterial: new THREE.MeshBasicMaterial({color: 0xFFFF00}),
+            baseMaterial: new THREE.MeshBasicMaterial({color: 0x001020}),
+            pillars: []
         }
     }
 
-    var base = new THREE.Mesh(LightPillar.staticData.geometry, LightPillar.staticData.baseMaterial);
-    var beam = new THREE.Mesh(LightPillar.staticData.geometry, LightPillar.staticData.beamMaterial);
-    beam.scale.set(0.6, 30, 0.6);
-    base.position.y = baseHeight/2;
-    beam.position.y = baseHeight/2;
+    this.ring = new THREE.Mesh(LightPillar.staticData.geometry, LightPillar.staticData.ringMaterial);
+    this.base = new THREE.Mesh(LightPillar.staticData.geometry, LightPillar.staticData.baseMaterial);
+    this.beam = new THREE.Mesh(LightPillar.staticData.geometry, LightPillar.staticData.beamMaterial);
+    this.base.scale.set(0.8, 1., 0.8);
+    this.beam.scale.set(0.6, 1., 0.6);
+    this.base.position.y = LightPillar.baseHeight/2;
+    this.beam.position.y = LightPillar.baseHeight/2;
+    this.ring.position.y = LightPillar.baseHeight/2 + 2;
 
     this.obj = new THREE.Object3D();
     this.obj.position.set(x, y, z);
-    this.obj.add(base);
-    this.obj.add(beam);
+    this.obj.add(this.base);
+    this.obj.add(this.beam);
+    this.obj.add(this.ring);
+
+    LightPillar.staticData.pillars.push(this);
+}
+
+function linstep(t, min, max) {
+    return Math.max(0.0, Math.min(1.0, (t - min) / (max - min)));
+}
+
+LightPillar.animate = function(t) {
+    const speed = 0.5;
+    LightPillar.staticData.pillars.forEach(function(p,i) {
+        const f = (t * speed * i) % 10;
+        p.ring.material.uniforms.time.value = linstep(f, 0, 6);
+
+        var s = linstep(f, 1, 3);
+        p.base.scale.y    = s + 0.000001;
+        p.base.position.y = s * LightPillar.baseHeight/2;
+
+        var s = linstep(f, 6, 7);
+        p.beam.scale.y    = s * 30. + 0.000001;
+        p.beam.position.y = s * LightPillar.baseHeight/2 * 30;
+    });
 }
 
 function getTronMaterial(url, repeat) {
-    if(!this.texureLoader) {
-        this.texureLoader = new THREE.TextureLoader();
-    }
-    var texture  = this.texureLoader.load(url);
+    var texture  = texureLoader.load(url);
     texture.magFilter = THREE.NearestFilter;
     texture.minFilter = THREE.LinearMipMapLinearFilter;
     if(repeat) {
@@ -204,5 +242,26 @@ void main()  {
    vec2 g =   smoothstep(0.5 - thickness - blur, 0.5 - thickness,         uv)
             - smoothstep(0.5 + thickness,        0.5 + thickness + blur, uv);
    gl_FragColor = vec4(0., 1., 1., 1.) * (g.x + g.y);
+}
+*/}.getComment();
+
+LightPillar.vertexShader = function() {/*!
+varying vec2 vUv;
+
+void main() {
+   vUv         = uv;
+   gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+}
+*/}.getComment();
+
+LightPillar.fragmentShader = function() {/*!
+precision mediump   float;
+varying   vec2      vUv;
+uniform   float     time;
+uniform   sampler2D texture1;
+
+void main()  {
+   vec2 uv      = vUv;
+   gl_FragColor = texture2D(texture1, vec2(clamp(time, 0., 1.), uv.y));
 }
 */}.getComment();
