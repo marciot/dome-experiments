@@ -27,7 +27,7 @@ function startAnimation() {
     
     var effect = new THREE.VREffect(renderer);
     
-    var camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 0.001, 700 );
+    var camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 0.1, 700 );
     RendererConfig.camera = camera;
     
     // Inititalize WebVR

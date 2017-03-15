@@ -112,7 +112,7 @@ function LightPillar(x, y, z) {
 
     if(!LightPillar.staticData) {
         LightPillar.staticData = {
-            geometry: new THREE.CylinderBufferGeometry(3, 3, LightPillar.baseHeight, 32),
+            geometry: new THREE.CylinderBufferGeometry(3, 3, LightPillar.baseHeight, 32, 1, true),
             ringMaterial: new THREE.ShaderMaterial( {
                 vertexShader:   LightPillar.vertexShader,
                 fragmentShader: LightPillar.fragmentShader,
