@@ -3,11 +3,26 @@
  *
  *    https://vimeo.com/97887646
  */
-function setupScene(scene) {
-    
-    const ringSeparation = 100;
-    const animationSpeed = 0.2;
 
+console.log("TRON loading");
+
+var animatedObjects = [];
+
+TronWorld = {
+    bounds: {
+        x: 100,
+        z: 500
+    },
+    separation: {
+        rings:  100,
+        pillars: 25
+    },
+    maxPillarDiameter: 2,
+    motionSpeed: 20,
+    darkColor: 0x002040
+};
+
+function setupScene(scene) {
     // The scene lighting.
     var light = new THREE.AmbientLight( 0x555555 );
     scene.add(light);
@@ -16,6 +31,8 @@ function setupScene(scene) {
     light.position.set( 10, 15, 20 );
     scene.add(light);
     
+    scene.fog = new THREE.FogExp2(0x000000, 0.002);
+
     /* The lens flare. We attach the flare to the camera,
      * the camera to the scene, so that the flare moves
      * with the camera. */
@@ -26,29 +43,68 @@ function setupScene(scene) {
     /* The floor. */
     var floor = new GridFloor(0, 0, 0);
     scene.add(floor.obj);
+    animatedObjects.push(floor);
     
     /* The rings. I position the rings at eye level so the flare
      * (which is closer to the camera) lines up with the rings */
-    for(var i = -5; i < 5; i++) {
-        var ring = new TronRing(0, RendererConfig.eyeHeight, i * ringSeparation);
+    for(var z = -TronWorld.bounds.z, i = 0; z < TronWorld.bounds.z; z += TronWorld.separation.rings, i++) {
+        var ring = new TronRing(0, RendererConfig.eyeHeight, z, i);
         scene.add(ring.obj);
+        animatedObjects.push(ring);
     }
 
     /* The light pillars */
     var pillar;
-    for(var i = -5; i < 5; i++) {
-        pillar = new LightPillar(20, 0, (-i + 0.5) * ringSeparation);
+    for(var z = -TronWorld.bounds.z; z < TronWorld.bounds.z; z += TronWorld.separation.pillars) {
+        pillar = new LightPillar(20, 0, z);
+        chooseUnoccupiedLocationAndSize(pillar.obj, TronWorld.maxPillarDiameter);
         scene.add(pillar.obj);
+        animatedObjects.push(pillar);
     }
 
     RendererConfig.animationCallback = function(t) {
-        RendererConfig.camera.position.z = -((t * animationSpeed) % 2) * ringSeparation;
-        TronRing.animate(t);
-        LightPillar.animate(t);
+        var cameraZ = -t * TronWorld.motionSpeed;
+        RendererConfig.camera.position.z = cameraZ;
+        animatedObjects.forEach(function(obj) {
+            obj.animate(t, cameraZ);
+        });
     }
 }
 
 var texureLoader = new THREE.TextureLoader();
+
+function chooseUnoccupiedLocationAndSize(obj, maxDiameter) {
+    const range = {min: 8, max: TronWorld.bounds.x};
+    const sign  = Math.random() < 0.5 ? -1 : 1;
+    const pos   = new THREE.Vector3(
+        (range.min + Math.random() * (range.max - range.min)) * sign,
+        0,
+        obj.position.z
+    );
+
+    var dist = Infinity;
+    var tmp  = new THREE.Vector3();
+    // Compute distance from all other objects
+    animatedObjects.forEach(function(o) {
+        const obj = o.obj;
+        const s   = obj.scale;
+        const d = tmp.copy(pos).sub(obj.position).length();
+        const objRadius = Math.sqrt(s.x*s.x + s.z*s.z);
+        dist = Math.min(d - objRadius, dist);
+    });
+
+    obj.position.copy(pos);
+    obj.scale.x = Math.min(maxDiameter/2, dist);
+    obj.scale.z = Math.min(maxDiameter/2, dist);
+}
+
+function loopBack(obj, cameraZ, r) {
+    const range = r || TronWorld.bounds.z;
+    if(obj.position.z - cameraZ > range) {
+        obj.position.z = cameraZ - range;
+        return true;
+    }
+}
 
 function LensFlare(x, y, z) {
     if(!LensFlare.staticData) {
@@ -76,7 +132,7 @@ function GridFloor(x, y, z) {
             material: new THREE.ShaderMaterial( {
                 vertexShader:   GridFloor.vertexShader,
                 fragmentShader: GridFloor.fragmentShader
-            } )
+            }),
         }
     }
     var mesh = new THREE.Mesh(GridFloor.staticData.geometry, GridFloor.staticData.material);
@@ -85,7 +141,11 @@ function GridFloor(x, y, z) {
     this.obj = mesh;
 }
 
-function TronRing(x, y, z) {
+GridFloor.prototype.animate = function(t, cameraZ) {
+    loopBack(this.obj, cameraZ, 100);
+}
+
+function TronRing(x, y, z, i) {
     if(!TronRing.staticData) {
         TronRing.staticData = {
             geometry: new THREE.TorusBufferGeometry(5, 1, 8, 40),
@@ -98,38 +158,40 @@ function TronRing(x, y, z) {
     this.obj = new THREE.Object3D();
     this.obj.position.set(x, y, z);
     this.obj.add(ring);
-
-    TronRing.staticData.rings.push(this.obj);
+    this.direction = ((i % 2) ? 1 : -1);
 }
 
-TronRing.animate = function(t) {
-    TronRing.staticData.rings.forEach(function(r,i) {r.rotation.z = t * ((i % 2) ? 1 : -1)});
+TronRing.prototype.animate = function(t, cameraZ) {
+    this.obj.rotation.z = t * this.direction;
+    loopBack(this.obj, cameraZ);
 }
 
 LightPillar.baseHeight = 20;
 
 function LightPillar(x, y, z) {
-
     if(!LightPillar.staticData) {
         LightPillar.staticData = {
             geometry: new THREE.CylinderBufferGeometry(3, 3, LightPillar.baseHeight, 32, 1, true),
-            ringMaterial: new THREE.ShaderMaterial( {
-                vertexShader:   LightPillar.vertexShader,
-                fragmentShader: LightPillar.fragmentShader,
-                uniforms: {
-                    time:     {value: 1.0 },
-                    texture1: {value: texureLoader.load('../textures/tron2.png')}
-                },
-                transparent: true,
-                side: THREE.DoubleSide
-            } ),
-            beamMaterial: new THREE.MeshBasicMaterial({color: 0xFFFF00}),
-            baseMaterial: new THREE.MeshBasicMaterial({color: 0x001020}),
+            beamMaterial: new THREE.MeshBasicMaterial({color: 0xFFFF00, fog: true}),
+            baseMaterial: new THREE.MeshLambertMaterial({color: TronWorld.darkColor}),
             pillars: []
         }
     }
 
-    this.ring = new THREE.Mesh(LightPillar.staticData.geometry, LightPillar.staticData.ringMaterial);
+    /* Each pillar must have a separate material because the different
+     * pillars have a different time constant */
+    var ringMaterial = new THREE.ShaderMaterial( {
+        vertexShader:   LightPillar.vertexShader,
+        fragmentShader: LightPillar.fragmentShader,
+        uniforms: {
+            time:     {value: 1.0 },
+            texture1: {value: texureLoader.load('../textures/tron2.png')}
+        },
+        transparent: true,
+        side: THREE.DoubleSide
+    } );
+
+    this.ring = new THREE.Mesh(LightPillar.staticData.geometry, ringMaterial);
     this.base = new THREE.Mesh(LightPillar.staticData.geometry, LightPillar.staticData.baseMaterial);
     this.beam = new THREE.Mesh(LightPillar.staticData.geometry, LightPillar.staticData.beamMaterial);
     this.base.scale.set(0.8, 1., 0.8);
@@ -143,28 +205,30 @@ function LightPillar(x, y, z) {
     this.obj.add(this.base);
     this.obj.add(this.beam);
     this.obj.add(this.ring);
-
-    LightPillar.staticData.pillars.push(this);
+    this.animationZ = 100 + Math.random() * 200;
 }
 
 function linstep(t, min, max) {
     return Math.max(0.0, Math.min(1.0, (t - min) / (max - min)));
 }
 
-LightPillar.animate = function(t) {
-    const speed = 0.5;
-    LightPillar.staticData.pillars.forEach(function(p,i) {
-        const f = (t * speed * i) % 10;
-        p.ring.material.uniforms.time.value = linstep(f, 0, 6);
+LightPillar.prototype.animate = function(t, cameraZ) {
+    if(loopBack(this.obj, cameraZ)) {
+        chooseUnoccupiedLocationAndSize(this.obj, TronWorld.maxPillarDiameter);
+    }
 
-        var s = linstep(f, 1, 3);
-        p.base.scale.y    = s + 0.000001;
-        p.base.position.y = s * LightPillar.baseHeight/2;
+    const speed = 0.05;
+    const f = (this.obj.position.z - cameraZ + this.animationZ) * speed;
 
-        var s = linstep(f, 6, 7);
-        p.beam.scale.y    = s * 30. + 0.000001;
-        p.beam.position.y = s * LightPillar.baseHeight/2 * 30;
-    });
+    this.ring.material.uniforms.time.value = linstep(f, 0, 6);
+
+    var s = linstep(f, 1, 3);
+    this.base.scale.y    = s + 0.000001;
+    this.base.position.y = s * LightPillar.baseHeight/2;
+
+    var s = linstep(f, 6, 7);
+    this.beam.scale.y    = s * 50. + 0.000001;
+    this.beam.position.y = s * LightPillar.baseHeight/2 * 50;
 }
 
 function getTronMaterial(url, repeat) {
@@ -177,7 +241,7 @@ function getTronMaterial(url, repeat) {
         texture.repeat.set( repeat, repeat );
     }
     return new THREE.MeshLambertMaterial({
-        color:       0x001020,
+        color:       TronWorld.darkColor,
         emissiveMap: texture,
         emissive:    0xFFFFFF
     });

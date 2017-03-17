@@ -120,7 +120,7 @@ function WebVRDomeRenderer( renderer ) {
     this.scene.add( grid );
 
     this.dome = new THREE.Mesh(
-        new THREE.SphereBufferGeometry(RendererConfig.domeRadius, 32, 32 ),
+        new THREE.SphereBufferGeometry(RendererConfig.domeRadius, 64, 64),
         this.material
     );
     this.dome.position.y = RendererConfig.eyeHeight;
@@ -139,7 +139,10 @@ function WebVRDomeRenderer( renderer ) {
         placeSeats(this.seats, this.seatMaterial);
         this.scene.add(this.seats);
 
-        this.selectedMaterial = new THREE.MeshLambertMaterial({color: 0xFF00FF});
+        this.selectedMaterial = new THREE.MeshLambertMaterial({
+            emissive:          0x88FF00,
+            emissiveIntensity: 0.5
+        });
 
         if(RendererConfig.seats.teleportGazeTime > 0) {
             this.enableTeleportation();
@@ -184,20 +187,26 @@ WebVRDomeRenderer.prototype.enableTeleportation = function(camera) {
     this.raycastingFunction = function(t) {
         raycaster.setFromCamera( gazePoint, camera );
         var intersects = raycaster.intersectObject(me.seats, true);
+        var nowSelected = null;
         if (intersects.length) {
-            var nowSelected = intersects[0].object;
+            nowSelected = intersects[0].object;
             nowSelected.material = me.selectedMaterial;
+        }
+        if(nowSelected !== lastSelected) {
+            if(lastSelected) {
+                lastSelected.material = me.seatMaterial;
+            }
+            gazeStartTime = t;
+        }
+        if(nowSelected) {
             var gazeTime = t - gazeStartTime;
             if(gazeTime > RendererConfig.seats.teleportGazeTime) {
                 camera.position.x = nowSelected.position.x;
                 camera.position.z = nowSelected.position.z;
             }
         }
-        if(lastSelected && nowSelected !== lastSelected) {
-            lastSelected.material = me.seatMaterial;
-            gazeStartTime = t;
-        }
         lastSelected = nowSelected;
+        this.selectedMaterial.emissiveIntensity = gazeTime/RendererConfig.seats.teleportGazeTime;
     }
 }
 
@@ -368,3 +377,5 @@ function startAnimation() {
 }
 
 WebVRConfig.ALWAYS_APPEND_POLYFILL_DISPLAY = true;
+
+console.log("Renderer loaded");
