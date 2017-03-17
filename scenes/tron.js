@@ -31,12 +31,11 @@ function setupScene(scene) {
     
     scene.fog = new THREE.FogExp2(0x000000, 0.002);
 
-    /* The lens flare. We attach the flare to the camera,
-     * the camera to the scene, so that the flare moves
+    /* The lens flare. We attach the flare to the camera rig,
+     * the camera rig to the scene, so that the flare moves
      * with the camera. */
     var flare = new LensFlare(0, 0, -2);
-    RendererConfig.camera.add( flare.obj );
-    scene.add(RendererConfig.camera);
+    RendererConfig.camera.rig.add( flare.obj );
 
     /* The floor. */
     var floor = new GridFloor(0, 0, 0);
@@ -46,7 +45,7 @@ function setupScene(scene) {
     /* The rings. I position the rings at eye level so the flare
      * (which is closer to the camera) lines up with the rings */
     for(var z = -TronWorld.bounds.z, i = 0; z < TronWorld.bounds.z; z += TronWorld.separation.rings, i++) {
-        var ring = new TronRing(0, RendererConfig.eyeHeight, z, i);
+        var ring = new TronRing(0, 0, z, i);
         scene.add(ring.obj);
         animatedObjects.push(ring);
     }
@@ -62,7 +61,7 @@ function setupScene(scene) {
 
     RendererConfig.animationCallback = function(t) {
         var cameraZ = -t * TronWorld.motionSpeed;
-        RendererConfig.camera.position.z = cameraZ;
+        RendererConfig.camera.rig.position.z = cameraZ;
         animatedObjects.forEach(function(obj) {
             obj.animate(t, cameraZ);
         });

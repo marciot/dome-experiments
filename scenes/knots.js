@@ -21,7 +21,7 @@ function sphericalCoordinatesToPosition(position, azimuth, elevation, distance) 
      */
     position.z = distance * Math.sin(inclination) * Math.cos(azimuth);
     position.x = distance * Math.sin(inclination) * Math.sin(azimuth);
-    position.y = distance * Math.cos(inclination) + RendererConfig.eyeHeight;
+    position.y = distance * Math.cos(inclination) + RendererConfig.camera.startingPosition.y;
 }
 
 function circumferenceAtElevation(elevation, distance) {
@@ -38,10 +38,6 @@ function setupScene(scene) {
     var light = new THREE.PointLight( 0xffffff, 1 );
     light.position.set( 10, 15, 20 );
     scene.add(light);
-    
-    // Draw a radial grid to represent the floor
-    var grid = new THREE.PolarGridHelper( domeDiameterInMeters/2);
-    scene.add( grid );
 
     const knotRadius   = 0.25;
     const maxElevation = 85;

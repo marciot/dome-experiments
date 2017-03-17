@@ -31,12 +31,11 @@ function setupScene(scene) {
     var material   = new THREE.MeshBasicMaterial( { map : texture } );
     mesh = new THREE.Mesh( geometry, material );
     mesh.rotation.y = -Math.PI/2;
-    mesh.rotation.x =  Math.PI/16;
     scene.add( mesh );
     
     var credit = getTextElement("Spherible - Purp Cycle - By Daniel Arnett", 6);
     credit.position.z = -8;
-    credit.position.y = 1;
+    credit.position.y = 0;
     scene.add(credit);
 }
 
@@ -57,14 +56,11 @@ function getTextElement(text, scale) {
     ctx.fillStyle = fillStyle;
     ctx.fillText(text, 0, 40);
     
-    var spriteMaterial = new THREE.SpriteMaterial( {
+    var textMaterial = new THREE.MeshBasicMaterial( {
         map:         new THREE.Texture(canvas),
-        color:       0xffffff,
-        lights:      false,
-        rotation:    Math.PI
+        transparent: true
     });
-    spriteMaterial.map.needsUpdate = true;
-    var sprite = new THREE.Sprite( spriteMaterial );
-    sprite.scale.set(scale, scale * height/textWidth, 1);
-    return sprite;
+    textMaterial.map.needsUpdate = true;
+    var textMesh = new THREE.Mesh( new THREE.PlaneBufferGeometry(scale, scale * height/textWidth), textMaterial );
+    return textMesh;
 }

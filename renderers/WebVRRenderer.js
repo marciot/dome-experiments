@@ -1,7 +1,22 @@
 const inchesToMeters     = 0.0254;
+const feetToMeters       = 0.3048;
+const degreesToRadians   = Math.PI / 180;
 
 RendererConfig = {
-    eyeHeight:              46.0 * inchesToMeters
+    perspectiveCamera: {
+        /* The perspectiveCamera is used to render the viewpoint
+         * from inside the virtual dome theater. */
+        fov:                50
+    },
+    camera: {
+        /* In the VR renderer, this is the PerspectiveCamera. The
+           starting position is at average eye height for a standing
+           person. */
+        startingPosition:   new THREE.Vector3(0, 5 * feetToMeters, 0),
+        /* The cameraRig member carries the camera. Move this around to
+        animate the viewpoint */
+        rig: null
+    }
 };
 
 /* Trick for inline strings for GLSL code:
@@ -27,8 +42,11 @@ function startAnimation() {
     
     var effect = new THREE.VREffect(renderer);
     
+    var cameraRig = new THREE.Object3D();
     var camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 0.1, 700 );
-    RendererConfig.camera = camera;
+    cameraRig.add(camera);
+    cameraRig.position.copy(RendererConfig.camera.startingPosition);
+    RendererConfig.camera.rig = cameraRig;
     
     // Inititalize WebVR
     
@@ -59,6 +77,7 @@ function startAnimation() {
     // Call the user routine to setup the scene
     var scene  = new THREE.Scene();
     setupScene(scene);
+    scene.add(cameraRig);
 
     var headsetPose          = new THREE.Vector3();
     var headsetOrientation   = new THREE.Quaternion();
@@ -66,9 +85,9 @@ function startAnimation() {
         // Get the headset position and orientation.
         var pose = vrDisplay.getPose();
         if (pose.position !== null) {
-            camera.position.fromArray(pose.position);
+            cameraRig.position.fromArray(pose.position);
         } else {
-            camera.position.y = RendererConfig.eyeHeight;
+            camera.position.set(0,0,0);
         }
         if (pose.orientation !== null) {
             camera.quaternion.fromArray(pose.orientation);

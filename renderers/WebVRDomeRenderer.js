@@ -8,8 +8,25 @@ const feetToMeters       = 0.3048;
 const degreesToRadians   = Math.PI / 180;
 
 RendererConfig = {
-    domeRadius:             35.0 * feetToMeters / 2,
-    eyeHeight:              46.0 * inchesToMeters,
+    perspectiveCamera: {
+        /* The perspectiveCamera is used to render the viewpoint
+         * from inside the virtual dome theater. */
+        fov:                50
+    },
+    camera: {
+        /* The cube camera takes in the 360 view of the scene. The
+           starting position is at average eye height for a standing
+           person. */
+        startingPosition:   new THREE.Vector3(0, 5 * feetToMeters, 0),
+        /* The cameraRig member carries the camera. Move this around to
+        animate the viewpoint */
+        rig: null
+    },
+    dome: {
+        radius:             35.0 * feetToMeters / 2,
+        inclination:        20 * degreesToRadians,
+        fullSphere:         false
+    },
     seats: {
         visible:            true,
         teleportGazeTime:   3.0, // in seconds, -1 to disable
@@ -26,7 +43,8 @@ RendererConfig = {
             angle:          10.0 * degreesToRadians,
         },
         legRoom:            20.0 * inchesToMeters,
-        separation:          1.0 * inchesToMeters
+        separation:          1.0 * inchesToMeters,
+        eyeLevel:           46.0 * inchesToMeters,
     },
 
     // These values control the placement of
@@ -45,7 +63,11 @@ RendererConfig = {
     // infinity, the seats will become straight
     // parallel rows facing forward.
     outsideWalkwayWidth:  4.0 * feetToMeters,
-    seatArcMultiplier:    1.5
+    seatArcMultiplier:    1.5,
+
+    // When only rendering a half-sphere, the bottom
+    // side of the dome will be painted in this color.
+    backgroundColor:      0x555555
 };
 
 /* Trick for inline strings for GLSL code:
@@ -116,17 +138,43 @@ function WebVRDomeRenderer( renderer ) {
 
     this.scene = new THREE.Scene();
 
-    var grid = new THREE.PolarGridHelper(RendererConfig.domeRadius);
-    this.scene.add( grid );
+    var theater = new THREE.Object3D();
+    this.scene.add(theater);
 
     this.dome = new THREE.Mesh(
-        new THREE.SphereBufferGeometry(RendererConfig.domeRadius, 64, 64),
+        new THREE.SphereBufferGeometry(RendererConfig.dome.radius, 64, 64,
+            0, Math.PI*2,
+            0, RendererConfig.dome.fullSphere ? Math.PI : Math.PI/2
+        ),
         this.material
     );
-    this.dome.position.y = RendererConfig.eyeHeight;
-    this.scene.add(this.dome);
+    this.dome.rotation.x = -RendererConfig.dome.inclination;
+    theater.add(this.dome);
 
+    /* If rendering a half sphere, the UV texture coordinates
+     * need to be halved in the y direction. */
+    if(!RendererConfig.dome.fullSphere) {
+        var uv = this.dome.geometry.attributes.uv.array;
+        for(var i = 1; i < uv.length; i += 2) {
+            uv[i] = uv[i]/2 + 0.5;
+        }
+    }
+
+    // The seats and floor are shifted down by eyeLevel, so that
+    // the user's eyes lie approximately at the center of the
+    // dome.
+    var seatsAndFloor = new THREE.Object3D();
+    theater.add( seatsAndFloor );
+    seatsAndFloor.position.y = -RendererConfig.seats.eyeLevel;
+
+    // The floor (represented by a grid)
+    var grid = new THREE.PolarGridHelper(RendererConfig.dome.radius);
+    grid.rotation.x = -RendererConfig.dome.inclination;
+    seatsAndFloor.add( grid );
+
+    // The seats
     if(RendererConfig.seats.visible) {
+        // The theater only needs lighting if the seats are visible.
         var light = new THREE.AmbientLight( 0xffffff, 0.1 );
         this.scene.add(light);
 
@@ -137,7 +185,7 @@ function WebVRDomeRenderer( renderer ) {
         this.seatMaterial = new THREE.MeshLambertMaterial();
         this.seats = new THREE.Object3D();
         placeSeats(this.seats, this.seatMaterial);
-        this.scene.add(this.seats);
+        seatsAndFloor.add(this.seats);
 
         this.selectedMaterial = new THREE.MeshLambertMaterial({
             emissive:          0x88FF00,
@@ -149,17 +197,24 @@ function WebVRDomeRenderer( renderer ) {
         }
     }
 
-    /* The cube camera snaps a 360 picture of the user's scene into a cube texture */
+    /* The cube camera snaps a 360 picture of the scene onto a cube texture
+     * for mapping onto the dome. The CubeCamera is independent of the user's
+     * viewpoint and should not be confused with the PerspectiveCamera, which
+     * renders from the user's view point insider the dome theater.
+     */
     var gl = this.renderer.getContext();
     var maxSize = gl.getParameter( gl.MAX_CUBE_MAP_TEXTURE_SIZE );
 
+    var cameraRig = new THREE.Object3D();
     this.cubeCamera = new THREE.CubeCamera(
         .1,     // Near clipping distance
         1000,   // Far clipping distance
         Math.min(maxSize, desiredCubeMapSize)
     );
-    this.cubeCamera.position.y = RendererConfig.eyeHeight;
-    RendererConfig.camera = this.cubeCamera;
+    cameraRig.add(this.cubeCamera);
+    this.cubeCamera.rotation.x = -RendererConfig.dome.inclination;
+    cameraRig.position.copy(RendererConfig.camera.startingPosition);
+    RendererConfig.camera.rig = cameraRig;
 }
 
 WebVRDomeRenderer.prototype.update = function(dt, scene ) {
@@ -178,7 +233,7 @@ WebVRDomeRenderer.prototype.update = function(dt, scene ) {
     }
 }
 
-WebVRDomeRenderer.prototype.enableTeleportation = function(camera) {
+WebVRDomeRenderer.prototype.enableTeleportation = function(viewer, camera) {
     var raycaster     = new THREE.Raycaster();
     var gazePoint     = new THREE.Vector2(0,0);
     var lastSelected  = null;
@@ -201,8 +256,7 @@ WebVRDomeRenderer.prototype.enableTeleportation = function(camera) {
         if(nowSelected) {
             var gazeTime = t - gazeStartTime;
             if(gazeTime > RendererConfig.seats.teleportGazeTime) {
-                camera.position.x = nowSelected.position.x;
-                camera.position.z = nowSelected.position.z;
+                viewer.position.copy(nowSelected.getWorldPosition());
             }
         }
         lastSelected = nowSelected;
@@ -241,19 +295,21 @@ function placeSeats(obj, seatMaterial) {
     const minSeatsInArc     = 30;
     const minSeatArcRadius  = c.width * minSeatsInArc / Math.PI / 2;
     const seatRowSpacing    = c.depth + s.legRoom;
-    const posInTheater      = function(x,z) {return Math.sqrt(x*x + z*z) < (d.domeRadius - d.outsideWalkwayWidth);}
+    const posInTheater      = function(x,z) {return Math.sqrt(x*x + z*z) < (d.dome.radius - d.outsideWalkwayWidth);}
     const seatGeometry      = getSeatGeometry();
     var   arcCenter         = new THREE.Vector3();
-    for(var x, z, r = minSeatArcRadius; r < (1 + d.seatArcMultiplier) * d.domeRadius; r += seatRowSpacing) {
+    for(var x, z, r = minSeatArcRadius; r < (1 + d.seatArcMultiplier) * d.dome.radius; r += seatRowSpacing) {
         const seatAngularSpacing = Math.atan2(c.width + s.separation, r - c.depth/2);
         arcCenter.x = 0;
-        arcCenter.z = -d.seatArcMultiplier * d.domeRadius;
+        arcCenter.z = -d.seatArcMultiplier * d.dome.radius;
+        const rowY = (r + arcCenter.z) * Math.tan(RendererConfig.dome.inclination);
         for(var a = 0; a < Math.PI; a += seatAngularSpacing) {
             x = r * Math.cos(a);
-            z = r * Math.sin(a) - d.seatArcMultiplier * d.domeRadius;
+            z = r * Math.sin(a) + arcCenter.z;
             if(posInTheater(x,z)) {
                 var mesh = new THREE.Mesh(seatGeometry, seatMaterial);
                 mesh.position.x = x;
+                mesh.position.y = rowY;
                 mesh.position.z = z;
                 mesh.lookAt(arcCenter);
                 obj.add(mesh);
@@ -268,15 +324,16 @@ function startAnimation() {
     
     var renderer = new THREE.WebGLRenderer();
     document.body.appendChild(renderer.domElement);
-    
-    var effect = new THREE.VREffect(renderer);
-    
+
     var effect = new THREE.VREffect(renderer);
     effect.setVRDisplay(vrDisplay);
     
     var domeRenderer = new WebVRDomeRenderer(renderer);
     
-    var camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 0.001, 700 );
+    var viewerBody = new THREE.Object3D();
+    var camera = new THREE.PerspectiveCamera( RendererConfig.perspectiveCamera.fov, window.innerWidth / window.innerHeight, 0.1, 700 );
+    viewerBody.add(camera);
+    viewerBody.position.y = -RendererConfig.seats.eyeLevel;
     
     // Inititalize WebVR
     
@@ -307,6 +364,8 @@ function startAnimation() {
     // Call the user routine to setup the scene
     var scene  = new THREE.Scene();
     setupScene(scene);
+    scene.add(viewerBody);
+    scene.add(RendererConfig.camera.rig);
 
     var headsetPose          = new THREE.Vector3();
     var headsetOrientation   = new THREE.Quaternion();
@@ -316,7 +375,7 @@ function startAnimation() {
         if (pose.position !== null) {
             camera.position.fromArray(pose.position);
         } else {
-            camera.position.y = RendererConfig.eyeHeight;
+            camera.position.y = RendererConfig.seats.eyeLevel;
         }
         if (pose.orientation !== null) {
             camera.quaternion.fromArray(pose.orientation);
@@ -373,7 +432,7 @@ function startAnimation() {
     });
     
     onWindowResize();
-    domeRenderer.enableTeleportation(camera);
+    domeRenderer.enableTeleportation(viewerBody, camera);
 }
 
 WebVRConfig.ALWAYS_APPEND_POLYFILL_DISPLAY = true;

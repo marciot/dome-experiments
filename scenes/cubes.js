@@ -21,7 +21,7 @@ function sphericalCoordinatesToPosition(position, azimuth, elevation, distance) 
      */
     position.z = distance * Math.sin(inclination) * Math.cos(azimuth);
     position.x = distance * Math.sin(inclination) * Math.sin(azimuth);
-    position.y = distance * Math.cos(inclination) + RendererConfig.eyeHeight;
+    position.y = distance * Math.cos(inclination) + RendererConfig.camera.startingPosition.y;
 }
 
 function setupScene(scene) {
@@ -38,10 +38,6 @@ function setupScene(scene) {
     light.position.set( 10, 15, 20 );
     scene.add(light);
     
-    // Draw a radial grid to represent the floor
-    var grid = new THREE.PolarGridHelper( domeDiameterInMeters/2);
-    scene.add( grid );
-
     var geometry = new THREE.BoxGeometry( 1, 1, 1 );
     
     var elevation = 0;

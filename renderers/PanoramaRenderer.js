@@ -4,9 +4,19 @@
  */
  
 const inchesToMeters     = 0.0254;
+const feetToMeters       = 0.3048;
+const degreesToRadians   = Math.PI / 180;
 
 RendererConfig = {
-    eyeHeight:              46.0 * inchesToMeters
+    camera: {
+        /* The cube camera takes in the 360 view of the scene. The
+           starting position is at average eye height for a standing
+           person. */
+        startingPosition:   new THREE.Vector3(0, 5 * feetToMeters, 0),
+        /* The cameraRig member carries the camera. Move this around to
+        animate the viewpoint */
+        rig: null
+    }
 };
 
 /* Trick for inline strings for GLSL code:
@@ -94,13 +104,15 @@ function PanoramaRenderer( renderer ) {
 	var gl = this.renderer.getContext();
 	var maxSize = gl.getParameter( gl.MAX_CUBE_MAP_TEXTURE_SIZE );
 
+    var cameraRig = new THREE.Object3D();
     this.cubeCamera = new THREE.CubeCamera(
         .1,     // Near clipping distance
         1000,   // Far clipping distance
         Math.min(maxSize, desiredCubeMapSize)
     );
-    this.cubeCamera.position.y = RendererConfig.eyeHeight;
-    RendererConfig.camera = this.cubeCamera;
+    cameraRig.add(this.cubeCamera);
+    cameraRig.position.copy(RendererConfig.camera.startingPosition);
+    RendererConfig.camera.rig = cameraRig;
 }
 
 PanoramaRenderer.prototype.setSize = function( width, height ) {
@@ -144,6 +156,7 @@ function startAnimation() {
     // Call the user routine to setup the scene
     var scene  = new THREE.Scene();
     setupScene(scene);
+    scene.add(RendererConfig.camera.rig);
     
     // The animation routine
     function animate() {
