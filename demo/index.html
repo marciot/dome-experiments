@@ -23,8 +23,10 @@
              *    http://demo?renderer=PanoramaRenderer&scene=cubes
              */
             var query = parseQuery();
-            loadResource("../renderers/" + (query.renderer || "PanoramaRenderer") + ".js", "defer");
-            loadResource("../scenes/"    + (query.scene    || "cubes") + ".js", "defer");
+            loadResource("../renderers/" + (query.renderer || "PanoramaRenderer") + ".js");
+            window.onRendererReady = function() {
+                loadResource("../scenes/"    + (query.scene    || "cubes") + ".js");
+            }
         </script>
     </head>
     <body onLoad="startAnimation()">

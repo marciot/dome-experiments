@@ -4,8 +4,6 @@
  *    https://vimeo.com/97887646
  */
 
-console.log("TRON loading");
-
 var animatedObjects = [];
 
 TronWorld = {

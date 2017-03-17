@@ -194,3 +194,7 @@ function startAnimation() {
     animate();
     onWindowResize();
 }
+
+if(window.onRendererReady) {
+    window.onRendererReady();
+}

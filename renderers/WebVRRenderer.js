@@ -125,3 +125,7 @@ function startAnimation() {
 }
 
 WebVRConfig.ALWAYS_APPEND_POLYFILL_DISPLAY = true;
+
+if(window.onRendererReady) {
+    window.onRendererReady();
+}

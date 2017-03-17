@@ -378,4 +378,6 @@ function startAnimation() {
 
 WebVRConfig.ALWAYS_APPEND_POLYFILL_DISPLAY = true;
 
-console.log("Renderer loaded");
+if(window.onRendererReady) {
+    window.onRendererReady();
+}
