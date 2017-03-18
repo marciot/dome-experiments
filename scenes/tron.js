@@ -90,37 +90,39 @@ function setupScene(scene) {
 var texureLoader = new THREE.TextureLoader();
 
 function chooseUnoccupiedLocationAndSize(obj, maxDiameter) {
-    const range = {min: TronWorld.corridorWidth/2 + 2, max: TronWorld.animateWithin.xMax};
-    const sign  = Math.random() < 0.5 ? -1 : 1;
+    do {
+        const range = {min: TronWorld.corridorWidth/2 + 2, max: TronWorld.animateWithin.xMax};
+        const sign  = Math.random() < 0.5 ? -1 : 1;
 
-    const pos   = new THREE.Vector3(
-        (range.min + Math.random() * (range.max - range.min)) * sign,
-        0,
-        obj.position.z
-    );
+        const pos   = new THREE.Vector3(
+            (range.min + Math.random() * (range.max - range.min)) * sign,
+            0,
+            obj.position.z
+        );
 
-    var dist = Infinity;
-    var tmp  = new THREE.Vector3();
+        var dist = Infinity;
+        var tmp  = new THREE.Vector3();
 
-    // Compute distance from all other objects
-    animatedObjects.forEach(function(other) {
-        const p = other.obj.position;
-        const s = other.obj.scale;
-        const otherRadius = Math.sqrt(s.x*s.x + s.z*s.z);
+        // Compute distance from all other objects
+        animatedObjects.forEach(function(other) {
+            const p = other.obj.position;
+            const s = other.obj.scale;
+            const otherRadius = Math.sqrt(s.x*s.x + s.z*s.z);
 
-        const distanceFromOther = tmp.copy(pos).sub(p).length();
-        dist = Math.max(0, Math.min(distanceFromOther - otherRadius, dist));
-    });
+            const distanceFromOther = tmp.copy(pos).sub(p).length();
+            dist = Math.max(0, Math.min(distanceFromOther - otherRadius, dist));
+        });
 
-    // Compute distance from "corridor", which we want to leave open
-    const distanceFromCorridor = Math.abs(pos.x) - TronWorld.corridorWidth;
-    dist = Math.min(distanceFromCorridor, dist);
+        // Compute distance from "corridor", which we want to leave open
+        const distanceFromCorridor = Math.abs(pos.x) - TronWorld.corridorWidth;
+        dist = Math.min(distanceFromCorridor, dist);
 
-    // The distance tells us the maximum size the object can be
-    // before it overlaps something else.
-    var scale = Math.min(maxDiameter/2, dist);
-    obj.position.copy(pos);
-    obj.scale.set(scale, scale, scale);
+        // The distance tells us the maximum size the object can be
+        // before it overlaps something else.
+        var scale = Math.min(maxDiameter/2, dist);
+        obj.position.copy(pos);
+        obj.scale.set(scale, scale, scale);
+    } while(scale == 0);
 }
 
 function loopBack(obj, cameraZ, r) {
