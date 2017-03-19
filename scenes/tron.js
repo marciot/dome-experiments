@@ -158,7 +158,12 @@ function GridFloor(x, y, z) {
             geometry: new THREE.PlaneBufferGeometry(500, 500),
             material: new THREE.ShaderMaterial( {
                 vertexShader:   GridFloor.vertexShader,
-                fragmentShader: GridFloor.fragmentShader
+                fragmentShader: GridFloor.fragmentShader,
+                uniforms: {
+                    // This causes the grid floor to fade in the
+                    // distance to avoid specking.
+                    far:     {value: 100 },
+                }
             }),
         }
     }
@@ -357,17 +362,24 @@ void main()  {
 */}.getComment();
 
 GridFloor.vertexShader = function() {/*!
+uniform   float   far;
+varying   float   depth;
+
 varying vec2 vUv;
 
 void main() {
    vUv         = uv;
    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+
+   // http://stackoverflow.com/questions/6408851/draw-the-depth-value-in-opengl-using-shaders
+   depth = gl_Position.z / far;
 }
 */}.getComment();
 
 GridFloor.fragmentShader = function() {/*!
 precision mediump float;
 varying   vec2    vUv;
+varying   float   depth;
 
 void main()  {
    vec2 uv        = mod(vUv * 25., 1.);
@@ -375,7 +387,7 @@ void main()  {
    vec2 blur      = vec2(0.01);
    vec2 g =   smoothstep(0.5 - thickness - blur, 0.5 - thickness,         uv)
             - smoothstep(0.5 + thickness,        0.5 + thickness + blur, uv);
-   gl_FragColor = vec4(0., 1., 1., 1.) * (g.x + g.y);
+   gl_FragColor = vec4(0., 1., 1., 1.) * (g.x + g.y) * (1. - depth);
 }
 */}.getComment();
 
