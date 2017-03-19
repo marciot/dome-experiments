@@ -3,21 +3,21 @@
 THREE.js Dome Experiments
 =========================
 
-This repository contains experiments in building THREE.js content for [DomeLab].
+This repository code for building THREE.js content for dome theaters and virtual reality. This project is an outgrowth of my participation in [DomeLab].
 
 Click this [link](http://marciot.com/dome-experiments) for online demonstrations.
 
 ## How to see the demos:
 
-Dome projection can be done by using [CefWithSyphon] and [Blendy Dome VJ]. If you do not have these, you can also see the demos on your PC or smartphone.
+Projection on a dome theater can be done by using [CefWithSyphon] and [Blendy Dome VJ]. You can also see the demos on your PC or smartphone in virtual reality.
 
-## Supported VR Headsets:
+## Viewing the demos in virtual reality:
 
-The two WebVR renderers should work on all major headsets, including Cardboard.
+The WebVRRenderer and WebVRDomeRenderer should work on all major headsets, including Cardboard, or can be used on any smartphone or PC without a headset.
 
-__GearVR:__ You must download the [Samsung Internet Browser for Gear VR] from the _Oculus Store_ Android app. You must then visit this demo page while in VR mode.
+__GearVR:__ You must download the [Samsung Internet Browser for Gear VR] from the _Oculus Store_ Android app. You must then visit the demo page while in VR.
 
-__Oculus Rift and HTC Vive:__ Rift and Vive users must visit this page using an experimental [WebVR] version of [Chrome] or [Firefox].
+__Oculus Rift and HTC Vive:__ Rift and Vive users must visit the demo page using an experimental [WebVR] version of [Chrome] or [Firefox].
         
 ## Resources:
 
@@ -35,7 +35,7 @@ I am a strong believer in open source. As such, this code has been released unde
 
 Please visit my [Patreon page] to learn how you can support this open-source project with a donation!
 
-[logo]: https://github.com/marciot/dome-experiments/raw/master/images/banner.jpg "A dome picture"
+[logo]: https://github.com/marciot/dome-experiments/raw/master/images/banner2.jpg "A dome screenshot"
 [DomeLab]: https://www.facebook.com/groups/DomeLab
 [THREE.CubemapToEquirectangular]: https://github.com/spite/THREE.CubemapToEquirectangular
 [CefWithSyphon]: https://github.com/vibber/CefWithSyphon
