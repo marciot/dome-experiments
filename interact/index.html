@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Security-Policy" content="default-src 'self' gap://ready; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' ws://0.peerjs.com:9000 http://0.peerjs.com:9000 https://storage.googleapis.com; img-src 'self' data: blob:">
+        <title>Dome Remote Control</title>
+        <style>
+            body {
+                margin:     0px;
+                overflow:   hidden;
+                position:   absolute;
+                top:        0px;
+                left:       0px;
+                right:      0px;
+                bottom:     0px;
+                
+                color:      white;
+                background: black;
+                
+                text-align: center;
+            }
+            
+            .button {
+                display:     inline-block;
+                padding:     1em;
+                font-weight: bold;
+                
+                color:       hsl(20, 100%, 50%);
+                border:      hsl(20, 100%, 50%) 3px solid;
+                
+                margin:      0.5em 0;
+                
+                font-size:   84px;
+            }
+            
+            .button.pressed {
+                background:  hsl(20, 100%, 25%);
+            }
+        </style>
+    </head>
+    <body>
+        <h1 id="status"></h1>
+        
+        <div class="button" id="touch">Touch</div>
+        
+        <script src="cordova.js"></script>
+        <script src="../libs/peer.js/peer-modified.js"></script>
+        <script src="js/cordova-setup.js"></script>
+        <script src="js/DomeInteraction.js"></script>
+        
+        <script src="../libs/webvr-polyfill/webvr-polyfill.min.js"></script>
+        <script>
+            var participantOptions = {
+                apiKey: 'u7htss9n8pz257b9',
+                roomId: "domeInteraction",
+                statusCallback: statusCallback,
+                touchElement: document.getElementById("touch")
+            };
+            
+            function statusCallback(state) {
+                var el = document.getElementById("status");
+                switch(state) {
+                    case 'open':
+                        el.innerText = "Connecting.";
+                        break;
+                    case 'error':
+                        el.innerText = "Connection failed.";
+                        break;
+                    case 'connected':
+                        el.innerText = "Connected to dome master.";
+                        break;
+                }
+            }
+            
+            window.onload = function() {
+                peerJsInit();
+                var pp = new DomeParticipant(participantOptions);
+            }
+            
+            window.onerror = function(error) {
+                document.write(error);
+            };
+        </script>
+    </body>
+</html>

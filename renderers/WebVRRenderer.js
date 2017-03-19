@@ -15,7 +15,9 @@ RendererConfig = {
         startingPosition:   new THREE.Vector3(0, 5 * feetToMeters, 0),
         /* The cameraRig member carries the camera. Move this around to
         animate the viewpoint */
-        rig: null
+        rig:        null,
+        near:       .1,
+        far:        1000
     }
 };
 
@@ -43,7 +45,8 @@ function startAnimation() {
     var effect = new THREE.VREffect(renderer);
     
     var cameraRig = new THREE.Object3D();
-    var camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 0.1, 700 );
+    var camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, RendererConfig.camera.near,
+        RendererConfig.camera.far);
     cameraRig.add(camera);
     cameraRig.position.copy(RendererConfig.camera.startingPosition);
     RendererConfig.camera.rig = cameraRig;

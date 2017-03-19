@@ -38,19 +38,23 @@
                 text-align: center;
             }
 
-            th.demo {
-                //width: 30%;
+            td.notes {
+                font-size:      small;
+            }
+
+            p.footnotes {
+                font-size:      small;
+                width:          50%;
+                margin:         2em auto;
             }
         </style>
     </head>
     <body>
         <h1>THREE.js Dome Experiments</h1>
+        <h2>Easily develop content for dome theaters and virtual reality.</h2>
 
         <p>
-        This web page is dedicated to experiments for <a href="https://www.facebook.com/groups/DomeLab/">DomeLab</a>.
-        </p>
-        </p>
-        Please visit the <a href="https://github.com/marciot/dome-experiments">GitHub</a> page for documentation.
+        This web page was born out of my experiments for <a href="https://www.facebook.com/groups/DomeLab/">DomeLab</a>. Code and documentation on <a href="https://github.com/marciot/dome-experiments">GitHub</a>.
         </p>
 
         <table id="demoTable">
@@ -58,9 +62,15 @@
                 <td></td>
                 <th colspan="2">WebVR Preview</th>
                 <th colspan="2">Dome Projection</th>
-                <th colspan="2">Source Code</th>
+                <th colspan="1">Source Code</th>
+                <th colspan="1">Notes</th>
             </tr>
         </table>
+
+        <p class="footnotes">
+            i. This example allows audience participation using smartphones.<br>
+            g. This example uses advanced GLSL (OpenGL Shader Language)<br>
+        </p>
 
         <!-- Fork me on github ribbon -->
 <a href="https://github.com/marciot/dome-experiments"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/38ef81f8aca64bb9a64448d0d70f1308ef5341ab/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6461726b626c75655f3132313632312e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png"></a>
@@ -68,7 +78,7 @@
 
         <script>
             var demos = document.getElementById("demoTable");
-            function addDemo(name, scene) {
+            function addDemo(name, notes, scene) {
                 scene = scene || name;
                 var tr = document.createElement("tr");
                 tr.innerHTML = '<th class="demo">' + name + '</th>' +
@@ -76,14 +86,16 @@
                     '<td><a href="demo/?scene=' + scene + '&renderer=WebVRDomeRenderer">WebVRDome</a></td>' +
                     '<td><a href="demo/?scene=' + scene + '&renderer=PanoramaRenderer">Panorama</a></td>' +
                     '<td><a href="demo/?scene=' + scene + '&renderer=FullDomeRenderer">FullDome</a></td>' +
-                    '<td><a href="https://github.com/marciot/dome-experiments/tree/master/scenes/' + scene + '.js">GitHub</a></td>';
+                    '<td><a href="https://github.com/marciot/dome-experiments/tree/master/scenes/' + scene + '.js">GitHub</a></td>' +
+                    '<td class="notes">' + (notes || "") + '</td>';
                 demos.appendChild(tr);
             }
 
             addDemo("cubes");
             addDemo("knots");
             addDemo("video");
-            addDemo("tron");
+            addDemo("tron",  "g");
+            addDemo("brush", "i");
         </script>
     </body>
 </html>

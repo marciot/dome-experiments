@@ -15,7 +15,9 @@ RendererConfig = {
         startingPosition:   new THREE.Vector3(0, 5 * feetToMeters, 0),
         /* The cameraRig member carries the camera. Move this around to
         animate the viewpoint */
-        rig: null
+        rig:        null,
+        near:       .1,
+        far:        1000
     }
 };
 
@@ -106,8 +108,8 @@ function PanoramaRenderer( renderer ) {
 
     var cameraRig = new THREE.Object3D();
     this.cubeCamera = new THREE.CubeCamera(
-        .1,     // Near clipping distance
-        1000,   // Far clipping distance
+        RendererConfig.camera.near,
+        RendererConfig.camera.far,
         Math.min(maxSize, desiredCubeMapSize)
     );
     cameraRig.add(this.cubeCamera);
