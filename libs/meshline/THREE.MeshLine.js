@@ -342,6 +342,8 @@ function MeshLineMaterial( parameters ) {
 'uniform float visibility;',
 'uniform float alphaTest;',
 'uniform vec2 repeat;',
+'uniform vec2 uvOffset;',
+'uniform vec2 uvScale;',
 '',
 'varying vec2 vUV;',
 'varying vec4 vColor;',
@@ -350,8 +352,9 @@ function MeshLineMaterial( parameters ) {
 'void main() {',
 '',
 '    vec4 c = vColor;',
-'    if( useMap == 1. ) c *= texture2D( map, vUV * repeat );',
-'    if( useAlphaMap == 1. ) c.a *= texture2D( alphaMap, vUV * repeat ).a;',
+'    vec2 uv = clamp((vUV + uvOffset) * uvScale, 0., 1.);',
+'    if( useMap == 1. ) c *= texture2D( map, uv * repeat );',
+'    if( useAlphaMap == 1. ) c.a *= texture2D( alphaMap, uv * repeat ).a;',
 '	 if( c.a < alphaTest ) discard;',
 '	 if( useDash == 1. ){',
 '	 	 ',
@@ -385,6 +388,8 @@ function MeshLineMaterial( parameters ) {
 	this.visibility = check( parameters.visibility, 1 );
 	this.alphaTest = check( parameters.alphaTest, 0 );
 	this.repeat = check( parameters.repeat, new THREE.Vector2( 1, 1 ) );
+    this.uvOffset = check( parameters.uvOffset, new THREE.Vector2( 0, 0 ) );
+    this.uvScale = check( parameters.uvScale, new THREE.Vector2( 1, 1 ) );
 
 	var material = new THREE.RawShaderMaterial( {
 		uniforms:{
@@ -403,7 +408,9 @@ function MeshLineMaterial( parameters ) {
 			useDash: { type: 'f', value: this.useDash },
 			visibility: {type: 'f', value: this.visibility},
 			alphaTest: {type: 'f', value: this.alphaTest},
-			repeat: { type: 'v2', value: this.repeat }
+			repeat: { type: 'v2', value: this.repeat },
+            uvOffset: { type: 'v2', value: this.uvOffset },
+            uvScale: { type: 'v2', value: this.uvScale }
 		},
 		vertexShader: vertexShaderSource.join( '\r\n' ),
 		fragmentShader: fragmentShaderSource.join( '\r\n' )
@@ -424,6 +431,8 @@ function MeshLineMaterial( parameters ) {
 	delete parameters.visibility;
 	delete parameters.alphaTest;
 	delete parameters.repeat;
+    delete parameters.uvOffset;
+    delete parameters.uvScale;
 
 	material.type = 'MeshLineMaterial';
 
@@ -456,6 +465,8 @@ MeshLineMaterial.prototype.copy = function ( source ) {
 	this.visibility = source.visibility;
 	this.alphaTest = source.alphaTest;
 	this.repeat.copy( source.repeat );
+    this.uvOffset.copy( source.uvOffset );
+    this.uvScale.copy( source.uvScale );
 
 	return this;
 

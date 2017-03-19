@@ -50,13 +50,27 @@ function DomeParticipant() {
     this.obj = new THREE.Object3D();
     this.obj.add(dot);
     
+    var lastPos = new THREE.Vector3();
+    var lastTouchState;
     this.interact = function(e) {
         dot.position.copy(e.pointing).multiplyScalar(domeDiameterInMeters/2);
         dot.material.color = (e.touchState == "holding") ? holdingColor : participantColor;
         
         if(e.touchState == "holding") {
-            addPointToMeshLine(dot.position);
+            if(lastTouchState != "holding") {
+                clearMeshLine();
+                lastPos.set(0,0,0);
+            }
+            if(lastPos.distanceTo(dot.position) > 0.05) {
+                addPointToMeshLine(dot.position);
+                lastPos.copy(dot.position);
+            } else {
+                shortenVisibleLine(0.5);
+            }
+        } else {
+            shortenVisibleLine(0.5);
         }
+        lastTouchState = e.touchState;
     }
     
     this.animate = function(t) {
@@ -64,10 +78,6 @@ function DomeParticipant() {
     
     /* Create the MeshLine (based on code from https://github.com/spite/THREE.MeshLine/blob/master/demo/js/main-spinner.js) */
     var geo = new Float32Array( 200 * 3 );
-    for( var j = 0; j < geo.length; j += 3 ) {
-        geo[ j ] = geo[ j + 1 ] = geo[ j + 2 ] = 0;
-    }
-
     var g = new MeshLine();
     g.setGeometry( geo, function( p ) { return p; } );
     
@@ -94,16 +104,38 @@ function DomeParticipant() {
     this.obj.add(mesh);
     
     function addPointToMeshLine(p) {
-        for( var j = 0; j < geo.length; j+= 3 ) {
-            geo[ j ]     = geo[ j + 3 ];
-            geo[ j + 1 ] = geo[ j + 4 ];
-            geo[ j + 2 ] = geo[ j + 5 ];
-        }
+        g.advance(p);
+        lengthenVisibleLine();
+    }
 
-        geo[ geo.length - 3 ] = p.x;
-        geo[ geo.length - 2 ] = p.y;
-        geo[ geo.length - 1 ] = p.z;
-        g.setGeometry( geo );
+    /* The visible length of the line is controlled by changing the
+    /* uv offsets to the texture. This is faster than adding or
+     * removing points from the MeshLine. */
+    var meshLineVisiblePoints = 0;
+    function clearMeshLine(p) {
+        meshLineVisiblePoints = 0;
+    }
+
+    function lengthenVisibleLine() {
+        meshLineVisiblePoints = Math.min(geo.length, meshLineVisiblePoints + 1);
+        updateMeshLineTexture();
+    }
+
+    function shortenVisibleLine(howMuch) {
+        meshLineVisiblePoints = Math.max(0, meshLineVisiblePoints - howMuch || 1);
+        updateMeshLineTexture();
+    }
+
+    function updateMeshLineTexture() {
+        if(meshLineVisiblePoints > 1) {
+            var startU = (geo.length - meshLineVisiblePoints)/geo.length;
+            var rangeU = 1 - startU;
+            lineMaterial.uniforms.uvScale.value.set ( 1/rangeU,  1);
+            lineMaterial.uniforms.uvOffset.value.set(  -startU,  0);
+            lineMaterial.visible = true;
+        } else {
+            lineMaterial.visible = false;
+        }
     }
 }
 
