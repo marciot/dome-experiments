@@ -45,8 +45,12 @@ function startAnimation() {
     var effect = new THREE.VREffect(renderer);
     
     var cameraRig = new THREE.Object3D();
-    var camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, RendererConfig.camera.near,
-        RendererConfig.camera.far);
+    var camera = new THREE.PerspectiveCamera(
+        RendererConfig.perspectiveCamera.fov,
+        window.innerWidth / window.innerHeight,
+        RendererConfig.camera.near,
+        RendererConfig.camera.far
+    );
     cameraRig.add(camera);
     cameraRig.position.copy(RendererConfig.camera.startingPosition);
     RendererConfig.camera.rig = cameraRig;
