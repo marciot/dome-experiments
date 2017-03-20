@@ -155,7 +155,7 @@ function loopBack(obj, cameraZ, r) {
 function LensFlare(x, y, z) {
     if(!LensFlare.staticData) {
         LensFlare.staticData = {
-            geometry: new THREE.CircleBufferGeometry( 0.6, 25 ),
+            geometry: new THREE.PlaneBufferGeometry(1, 1),
             material: new THREE.ShaderMaterial( {
                 vertexShader:   LensFlare.vertexShader,
                 fragmentShader: LensFlare.fragmentShader,
@@ -165,8 +165,10 @@ function LensFlare(x, y, z) {
             } )
         }
     }
-
-    var flare = new THREE.Mesh(LensFlare.staticData.geometry, LensFlare.staticData.material);
+    var flare = new THREE.Mesh(
+        LensFlare.staticData.geometry,
+        LensFlare.staticData.material
+    );
     flare.position.set(x, y, z);
     this.obj = flare;
 }
@@ -218,10 +220,10 @@ function TronRing(x, y, z, i) {
         combinedGeometry.mergeMesh(shoe);
         TronRing.staticData.shoeGeometry = new THREE.BufferGeometry().fromGeometry(combinedGeometry);
     }
-    this.body = new THREE.Mesh(TronRing.staticData.bodyGeometry, getTronBodyMaterial(4));
-    this.ring = new THREE.Mesh(TronRing.staticData.glowGeometry, getTronGlowDecal());
+    this.body = new THREE.Mesh(TronRing.staticData.bodyGeometry, getBodyMaterial(4));
+    this.ring = new THREE.Mesh(TronRing.staticData.glowGeometry, getGlowDecal());
     this.ring.add(this.body);
-    this.obj = new THREE.Mesh(TronRing.staticData.shoeGeometry, getTronGlowMaterial());
+    this.obj = new THREE.Mesh(TronRing.staticData.shoeGeometry, getGlowMaterial());
     this.obj.add(this.ring);
     this.obj.position.set(x, y, z);
     this.obj.scale.set(TronWorld.maxDiameter.ring, TronWorld.maxDiameter.ring, TronWorld.maxDiameter.ring);
@@ -237,15 +239,11 @@ function LightPillar(x, y, z) {
     if(!LightPillar.staticData) {
         LightPillar.staticData = {
             geometry: new THREE.CylinderBufferGeometry(1, 1, TronWorld.pillarRatio, 32, 1, true),
-            beamMaterial: new THREE.MeshBasicMaterial({color: 0xFFFF00, fog: true}),
             texture: texureLoader.load('../textures/tron2.png')
         }
     }
 
-    this.beam = new THREE.Mesh(
-        LightPillar.staticData.geometry,
-        LightPillar.staticData.beamMaterial
-    );
+    this.beam = new THREE.Mesh(LightPillar.staticData.geometry, getBeamMaterial());
     this.obj = new THREE.Object3D();
     this.obj.add(this.beam);
     this.obj.position.set(x, y, z);
@@ -264,7 +262,7 @@ function LightPillar(x, y, z) {
             transparent: true,
             side: THREE.DoubleSide
         } );
-        this.base = new THREE.Mesh(LightPillar.staticData.geometry, getTronPillarMaterial());
+        this.base = new THREE.Mesh(LightPillar.staticData.geometry, getPillarMaterial());
         this.ring  = new THREE.Mesh(LightPillar.staticData.geometry, ringsMaterial);
         this.obj.add(this.base);
         this.obj.add(this.ring);
@@ -332,7 +330,7 @@ function LandOrb(x, y, z) {
     } );
 
     this.obj  = new THREE.Mesh(LandOrb.staticData.geometry, ringsMaterial);
-    this.body = new THREE.Mesh(LandOrb.staticData.geometry, getTronBodyMaterial());
+    this.body = new THREE.Mesh(LandOrb.staticData.geometry, getBodyMaterial());
     this.body.scale.set(0.9, 0.9, 0.9);
     this.obj.add(this.body);
     this.obj.position.set(x, y, z);
@@ -378,11 +376,9 @@ GroundDisc.prototype.animate = function(t) {
     this.obj.material.uniforms.time.value = t;
 }
 
-function getTronGlowDecal() {
+function getGlowDecal() {
     if(!this.glowDecal) {
         var emissiveMap  = texureLoader.load('../textures/tron1.png');
-        emissiveMap.magFilter = THREE.NearestFilter;
-        emissiveMap.minFilter = THREE.LinearMipMapLinearFilter;
         this.glowDecal = new THREE.MeshLambertMaterial({
             map:         emissiveMap,
             emissiveMap: emissiveMap,
@@ -393,12 +389,11 @@ function getTronGlowDecal() {
     return this.glowDecal;
 }
 
-function getTronPillarMaterial() {
+function getPillarMaterial() {
     if(!this.pillarMaterial) {
         this.pillarMaterial = new THREE.MeshPhongMaterial({
             color:       TronWorld.darkColor,
-            normalMap:   getTronNormalMap(),
-            normalScale: new THREE.Vector2(0.25, 0.25),
+            normalMap:   getNormalMap(),
             emissiveMap: texureLoader.load('../textures/tron7.png'),
             emissive:    0xFFFFFF
         });
@@ -406,29 +401,36 @@ function getTronPillarMaterial() {
     return this.pillarMaterial;
 }
 
-function getTronBodyMaterial(repeatU) {
+function getBodyMaterial(repeatU) {
     if(!this.bodyMaterial) {
         this.bodyMaterial = new THREE.MeshPhongMaterial({
             color:       TronWorld.darkColor,
-            normalMap:   getTronNormalMap(repeatU),
-            normalScale: new THREE.Vector2(0.25, 0.25),
-            emissiveMap: getTronEmmisiveMap(),
+            normalMap:   getNormalMap(repeatU),
+            //normalScale: new THREE.Vector2(0.25, 0.25),
+            emissiveMap: getEmmisiveMap(),
             emissive: 0xFFFFFF
         });
     }
     return this.bodyMaterial;
 }
 
-function getTronGlowMaterial() {
+function getGlowMaterial() {
     if(!this.glowMaterial) {
         this.glowMaterial = new THREE.MeshBasicMaterial({
-            color: 0x00FFFF
+            color: 0xFFFFFF
         });
     }
     return this.glowMaterial;
 }
 
-function getTronNormalMap(repeatU) {
+function getBeamMaterial() {
+    if(!this.beamMaterial) {
+        this.beamMaterial = new THREE.MeshBasicMaterial({color: 0xFFFF00, fog: true});
+    }
+    return this.beamMaterial;
+}
+
+function getNormalMap(repeatU) {
     if(!this.normalMap) {
         var normalMap = texureLoader.load('../textures/tron4.png');
         normalMap.wrapS = THREE.RepeatWrapping;
@@ -439,7 +441,7 @@ function getTronNormalMap(repeatU) {
     return this.normalMap;
 }
 
-function getTronEmmisiveMap(repeat) {
+function getEmmisiveMap(repeat) {
     if(!this.emissiveMap) {
         this.emissiveMap = texureLoader.load('../textures/tron6.png');
         this.emissiveMap.wrapS = THREE.RepeatWrapping;
@@ -462,7 +464,7 @@ void main() {
 */}.getComment();
 
 LensFlare.fragmentShader = function() {/*!
-precision mediump float;
+precision lowp    float;
 varying   vec2    vUv;
 
 float noise(float a) {
@@ -475,14 +477,12 @@ float noise(float a) {
 ;}
 
 void main()  {
-    vec2 uv = (vUv - vec2(0.5, 0.5)) * 2.;
-
+    vec2 uv      = (vUv - vec2(0.5, 0.5)) * 2.;
     float a      = atan(uv.x,uv.y);
-    float r      = 1. - length(uv);
-    float white  = pow(0.05 + 1.0 * r, 2.);
-    float purple = pow(0.75 * noise(a), 3.) * r;
-    gl_FragColor = pow(r, 3.) * (vec4(1., 1., 1., 1.) * white +
-                                 vec4(1., 0., 1., 1.) * purple);
+    float white  = 1. - length(uv);
+    float purple = white * pow(noise(a), 3.);
+    gl_FragColor = vec4(1., 1., 1., 1.) * white +
+                   vec4(1., 0., 1., 1.) * purple;
 }
 */}.getComment();
 
@@ -496,23 +496,23 @@ void main() {
    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
 
    // http://stackoverflow.com/questions/6408851/draw-the-depth-value-in-opengl-using-shaders
-   depth = gl_Position.z / far;
+   depth = 1. - gl_Position.z / far;
 }
 */}.getComment();
 
 GridFloor.fragmentShader = function() {/*!
-precision mediump float;
+precision highp   float;
 varying   vec2    vUv;
 varying   float   depth;
 uniform   vec3    color;
 
 void main()  {
-   vec2 uv        = mod(vUv * 25., 1.);
+   vec2 uv        = mod(vUv * 25., 1.) - vec2(0.5,0.5);
    vec2 thickness = vec2(0.01);
    vec2 blur      = vec2(0.005);
-   vec2 g =   smoothstep(0.5 - thickness - blur, 0.5 - thickness,         uv)
-            - smoothstep(0.5 + thickness,        0.5 + thickness + blur, uv);
-   gl_FragColor = vec4(mix(color, vec3(0., 1., 1.), (g.x + g.y)) * (1. - depth), 1.);
+   vec2 g =   smoothstep(- thickness - blur, - thickness,        uv)
+            - smoothstep(+ thickness,        + thickness + blur, uv);
+   gl_FragColor = vec4(mix(color, vec3(0., 1., 1.), (g.x + g.y)) * depth, 1.);
 }
 */}.getComment();
 
@@ -526,14 +526,13 @@ void main() {
 */}.getComment();
 
 LightPillar.fragmentShader = function() {/*!
-precision mediump   float;
+precision lowp      float;
 varying   vec2      vUv;
 uniform   float     time;
 uniform   sampler2D texture1;
 
 void main()  {
-   vec2 uv      = vUv;
-   gl_FragColor = texture2D(texture1, vec2(clamp(time, 0., 1.), uv.y));
+   gl_FragColor = texture2D(texture1, vec2(time, vUv.y));
 }
 */}.getComment();
 
@@ -547,14 +546,13 @@ void main() {
 */}.getComment();
 
 LandOrb.fragmentShader = function() {/*!
-precision mediump   float;
+precision lowp      float;
 varying   vec2      vUv;
 uniform   float     time;
 uniform   sampler2D texture1;
 
 void main()  {
-   vec2 uv      = vUv;
-   gl_FragColor = texture2D(texture1, vec2(uv.x * 0.25 + clamp(time, 0., 1.) * 0.75, uv.y));
+   gl_FragColor = texture2D(texture1, vec2(vUv.x * 0.25 + time * 0.75, vUv.y));
 }
 */}.getComment();
 
@@ -568,13 +566,13 @@ void main() {
 */}.getComment();
 
 GroundDisc.fragmentShader = function() {/*!
-precision mediump   float;
+precision lowp      float;
 varying   vec2      vUv;
 uniform   float     time;
 uniform   sampler2D texture1;
 
 void main()  {
    vec2 uv      = (vUv - vec2(0.5, 0.5)) * 2.;
-   gl_FragColor = texture2D(texture1, vec2(clamp(time, 0., 1.), length(uv)));
+   gl_FragColor = texture2D(texture1, vec2(time, length(uv)));
 }
 */}.getComment();
