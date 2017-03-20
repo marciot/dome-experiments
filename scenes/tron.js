@@ -17,13 +17,13 @@ TronWorld = {
         xMax:     100
     },
     separation: {
-        rings:    100,
-        pillars:   25,
-        orbs:      35,
+        rings:    101,
+        pillars:    7,
+        orbs:      11,
     },
     maxDiameter: {
         ring:       5,
-        pillar:     3,
+        pillar:     9,
         orb:       15
     },
     corridorWidth: 5.5,
@@ -64,7 +64,7 @@ function setupScene(scene) {
     var pillar;
     for(var z = -TronWorld.bounds.z; z < TronWorld.bounds.z; z += TronWorld.separation.pillars) {
         pillar = new LightPillar(20, 0, z);
-        chooseUnoccupiedLocationAndSize(pillar.obj, TronWorld.maxDiameter.pillar);
+        tronLayout.chooseUnoccupiedLocationAndSize(pillar.obj, TronWorld.maxDiameter.pillar);
         scene.add(pillar.obj);
         animatedObjects.push(pillar);
     }
@@ -73,7 +73,7 @@ function setupScene(scene) {
     var orb;
     for(var z = -TronWorld.bounds.z; z < TronWorld.bounds.z; z += TronWorld.separation.orbs) {
         orb = new LandOrb(0, 0, z);
-        chooseUnoccupiedLocationAndSize(orb.obj, TronWorld.maxDiameter.orb);
+        tronLayout.chooseUnoccupiedLocationAndSize(orb.obj, TronWorld.maxDiameter.orb);
         scene.add(orb.obj);
         animatedObjects.push(orb);
     }
@@ -81,55 +81,57 @@ function setupScene(scene) {
     RendererConfig.animationCallback = function(t) {
         var cameraZ = -t * TronWorld.motionSpeed;
         RendererConfig.camera.rig.position.z = cameraZ;
-        animatedObjects.forEach(function(obj) {
-            obj.animate(t, cameraZ);
-        });
+        for(var i = 0; i < animatedObjects.length; i++) {
+            animatedObjects[i].animate(t, cameraZ);
+        }
     }
 }
 
 var texureLoader = new THREE.TextureLoader();
+var tronLayout   = new TronLayout();
 
-function chooseUnoccupiedLocationAndSize(obj, maxDiameter) {
-    do {
-        const range = {min: TronWorld.corridorWidth/2 + 2, max: TronWorld.animateWithin.xMax};
-        const sign  = Math.random() < 0.5 ? -1 : 1;
+function TronLayout() {
+    var range = {min: TronWorld.corridorWidth/2 + 2, max: TronWorld.animateWithin.xMax};
+    var pos = new THREE.Vector3();
+    var tmp = new THREE.Vector3();
 
-        const pos   = new THREE.Vector3(
-            (range.min + Math.random() * (range.max - range.min)) * sign,
-            0,
-            obj.position.z
-        );
+    this.chooseUnoccupiedLocationAndSize = function(obj, maxDiameter) {
+        do {
+            const sign  = Math.random() < 0.5 ? -1 : 1;
+            pos.set(
+                (range.min + Math.random() * (range.max - range.min)) * sign,
+                0,
+                obj.position.z
+            );
 
-        var dist = Infinity;
-        var tmp  = new THREE.Vector3();
+            // Compute distance from all other objects
+            var dist = Infinity;
+            for(var i = 0; i < animatedObjects.length; i++) {
+                const other = animatedObjects[i];
+                const p = other.obj.position;
+                const s = other.obj.scale;
+                const otherRadius = Math.sqrt(s.x*s.x + s.z*s.z);
+                const distanceFromOther = tmp.copy(pos).sub(p).length();
+                dist = Math.max(0, Math.min(distanceFromOther - otherRadius, dist));
+            }
 
-        // Compute distance from all other objects
-        animatedObjects.forEach(function(other) {
-            const p = other.obj.position;
-            const s = other.obj.scale;
-            const otherRadius = Math.sqrt(s.x*s.x + s.z*s.z);
+            // Compute distance from "corridor", which we want to leave open
+            const distanceFromCorridor = Math.abs(pos.x) - TronWorld.corridorWidth;
+            dist = Math.min(distanceFromCorridor, dist);
 
-            const distanceFromOther = tmp.copy(pos).sub(p).length();
-            dist = Math.max(0, Math.min(distanceFromOther - otherRadius, dist));
-        });
-
-        // Compute distance from "corridor", which we want to leave open
-        const distanceFromCorridor = Math.abs(pos.x) - TronWorld.corridorWidth;
-        dist = Math.min(distanceFromCorridor, dist);
-
-        // The distance tells us the maximum size the object can be
-        // before it overlaps something else.
-        var scale = Math.min(maxDiameter/2, dist);
-        obj.position.copy(pos);
-        obj.scale.set(scale, scale, scale);
-    } while(scale == 0);
+            // The distance tells us the maximum size the object can be
+            // before it overlaps something else.
+            var scale = Math.min(maxDiameter/2, dist);
+            obj.position.copy(pos);
+            obj.scale.set(scale, scale, scale);
+        } while(scale == 0);
+    }
 }
 
 function loopBack(obj, cameraZ, r) {
     const range = r || TronWorld.bounds.z;
     if(obj.position.z - cameraZ > range) {
-        obj.position.z = cameraZ - range;
-        return true;
+        obj.position.z -= range * 2;
     }
 }
 
@@ -162,7 +164,8 @@ function GridFloor(x, y, z) {
                 uniforms: {
                     // This causes the grid floor to fade in the
                     // distance to avoid specking.
-                    far:     {value: 100 },
+                    far:     {value: 100},
+                    color:   {value: new THREE.Color(TronWorld.darkColor)}
                 }
             }),
         }
@@ -178,64 +181,87 @@ GridFloor.prototype.animate = function(t, cameraZ) {
 }
 
 function TronRing(x, y, z, i) {
+    const tubeDia = 1/5;
+    const shoeDia = 1/25;
+    const bothDia = tubeDia + shoeDia;
     if(!TronRing.staticData) {
         TronRing.staticData = {
-            geometry: new THREE.TorusBufferGeometry(1, 1/5, 8, 40),
-            material: getTronMaterial('../textures/tron1.png')
+            glowGeometry: new THREE.TorusBufferGeometry(1,       tubeDia       , 32, 40),
+            bodyGeometry: new THREE.TorusBufferGeometry(1,       tubeDia * 0.95,  8, 40),
+            shoeGeometry: new THREE.TorusBufferGeometry(bothDia, shoeDia, 32, 40),
         }
     }
 
-    var ring = new THREE.Mesh(TronRing.staticData.geometry, TronRing.staticData.material);
+    function addShoe(obj, x) {
+        var shoe = new THREE.Mesh(TronRing.staticData.shoeGeometry, getTronGlowMaterial());
+        shoe.position.x = x;
+        shoe.position.y = shoeDia;
+        shoe.rotation.x = Math.PI/2;
+        obj.add(shoe);
+    }
+    this.body = new THREE.Mesh(TronRing.staticData.bodyGeometry, getTronBaseMaterial(4));
+    this.glow = new THREE.Mesh(TronRing.staticData.glowGeometry, getTronGlowDecal());
     this.obj = new THREE.Object3D();
     this.obj.position.set(x, y, z);
-    this.obj.add(ring);
     this.obj.scale.set(TronWorld.maxDiameter.ring, TronWorld.maxDiameter.ring, TronWorld.maxDiameter.ring);
+    this.obj.add(this.body);
+    this.obj.add(this.glow);
+    addShoe(this.obj, -1);
+    addShoe(this.obj,  1);
     this.direction = ((i % 2) ? 1 : -1);
 }
 
 TronRing.prototype.animate = function(t, cameraZ) {
-    this.obj.rotation.z = t * this.direction;
+    this.body.rotation.z = this.glow.rotation.z = t * this.direction;
     loopBack(this.obj, cameraZ);
 }
 
-LightPillar.baseHeight = 20;
+LightPillar.height = 5;
 
 function LightPillar(x, y, z) {
     if(!LightPillar.staticData) {
         LightPillar.staticData = {
-            geometry: new THREE.CylinderBufferGeometry(3, 3, LightPillar.baseHeight, 32, 1, true),
+            geometry: new THREE.CylinderBufferGeometry(1, 1, LightPillar.height, 32, 1, true),
             beamMaterial: new THREE.MeshBasicMaterial({color: 0xFFFF00, fog: true}),
-            baseMaterial: new THREE.MeshLambertMaterial({color: TronWorld.darkColor})
+            texture: texureLoader.load('../textures/tron2.png')
         }
     }
 
-    /* Each pillar must have a separate material because the different
-     * pillars have a different time constant */
-    var ringMaterial = new THREE.ShaderMaterial( {
-        vertexShader:   LightPillar.vertexShader,
-        fragmentShader: LightPillar.fragmentShader,
-        uniforms: {
-            time:     {value: 1.0 },
-            texture1: {value: texureLoader.load('../textures/tron2.png')}
-        },
-        transparent: true,
-        side: THREE.DoubleSide
-    } );
-
-    this.ring = new THREE.Mesh(LightPillar.staticData.geometry, ringMaterial);
-    this.base = new THREE.Mesh(LightPillar.staticData.geometry, LightPillar.staticData.baseMaterial);
-    this.beam = new THREE.Mesh(LightPillar.staticData.geometry, LightPillar.staticData.beamMaterial);
-    this.base.scale.set(0.8, 1., 0.8);
-    this.beam.scale.set(0.6, 1., 0.6);
-    this.base.position.y = LightPillar.baseHeight/2;
-    this.beam.position.y = LightPillar.baseHeight/2;
-    this.ring.position.y = LightPillar.baseHeight/2 + 2;
-
+    this.style = Math.ceil(Math.random() * 2);
     this.obj = new THREE.Object3D();
     this.obj.position.set(x, y, z);
-    this.obj.add(this.base);
+
+    this.beam = new THREE.Mesh(LightPillar.staticData.geometry, LightPillar.staticData.beamMaterial);
     this.obj.add(this.beam);
-    this.obj.add(this.ring);
+
+    if(this.style === 1) {
+        /* Each pillar must have a separate material because the different
+         * pillars have a different time constant */
+        var ringMaterial = new THREE.ShaderMaterial( {
+            vertexShader:   LightPillar.vertexShader,
+            fragmentShader: LightPillar.fragmentShader,
+            uniforms: {
+                time:     {value: 1.0 },
+                texture1: {value: LightPillar.staticData.texture}
+            },
+            transparent: true,
+            side: THREE.DoubleSide
+        } );
+        this.ring = new THREE.Mesh(LightPillar.staticData.geometry, ringMaterial);
+        this.base = new THREE.Mesh(LightPillar.staticData.geometry, getTronBaseMaterial());
+        this.obj.add(this.base);
+        this.obj.add(this.ring);
+        this.base.scale.set(0.8, 1., 0.8);
+        this.beam.scale.set(0.6, 1., 0.6);
+        this.setHeight(this.ring, 1.1);
+        this.setHeight(this.base, 1);
+        this.setHeight(this.beam, 1);
+    } else {
+        this.disc = new GroundDisc(this.obj, 1.5);
+        this.beam.scale.set(0.25, 1., 0.25);
+        this.setHeight(this.beam, 50);
+    }
+
     this.animationZ = TronWorld.animateWithin.zMin + Math.random() * (TronWorld.animateWithin.zMax - TronWorld.animateWithin.zMin);
 }
 
@@ -243,30 +269,37 @@ function linstep(t, min, max) {
     return Math.max(0.0, Math.min(1.0, (t - min) / (max - min)));
 }
 
+LightPillar.prototype.setHeight = function(obj, h) {
+    obj.scale.y    = h + 0.0001;
+    obj.position.y = h * LightPillar.height/2;
+}
+
+LightPillar.prototype.setBeamThickness = function(t) {
+    this.beam.scale.x = this.beam.scale.z = t * 0.25 + 0.0001;
+    this.beam.material.visible = t > 0.01;
+}
+
 LightPillar.prototype.animate = function(t, cameraZ) {
-    if(loopBack(this.obj, cameraZ)) {
-        chooseUnoccupiedLocationAndSize(this.obj, TronWorld.maxDiameter.pillar);
-    }
+    loopBack(this.obj, cameraZ);
 
     const speed = 0.05;
     const f = (this.obj.position.z - cameraZ + this.animationZ) * speed;
 
-    this.ring.material.uniforms.time.value = linstep(f, 0, 6);
-
-    var s = linstep(f, 1, 3);
-    this.base.scale.y    = s + 0.000001;
-    this.base.position.y = s * LightPillar.baseHeight/2;
-
-    var s = linstep(f, 6, 7);
-    this.beam.scale.y    = s * 50. + 0.000001;
-    this.beam.position.y = s * LightPillar.baseHeight/2 * 50;
+    if(this.style === 1) {
+        this.ring.material.uniforms.time.value = linstep(f, 0, 6);
+        this.setHeight(this.base, linstep(f, 3, 5));
+        this.setHeight(this.beam, linstep(f, 8, 9) * 50);
+    } else {
+        this.disc.animate(linstep(f, 0, 6));
+        this.setBeamThickness(linstep(f, 6, 9));
+    }
 }
 
 function LandOrb(x, y, z) {
     if(!LandOrb.staticData) {
         LandOrb.staticData = {
             geometry: new THREE.SphereBufferGeometry(1, 32, 6, 0, Math.PI*2, 0, Math.PI/2),
-            bodyMaterial: new THREE.MeshLambertMaterial({color: TronWorld.darkColor})
+            texture:  texureLoader.load('../textures/tron3.png')
         }
     }
 
@@ -277,13 +310,13 @@ function LandOrb(x, y, z) {
         fragmentShader: LandOrb.fragmentShader,
         uniforms: {
             time:     {value: 1.0 },
-            texture1: {value: texureLoader.load('../textures/tron3.png')}
+            texture1: {value: LandOrb.staticData.texture}
         },
         transparent: true,
         side: THREE.DoubleSide
     } );
 
-    this.body = new THREE.Mesh(LandOrb.staticData.geometry, LandOrb.staticData.bodyMaterial);
+    this.body = new THREE.Mesh(LandOrb.staticData.geometry, getTronBaseMaterial());
     this.ring = new THREE.Mesh(LandOrb.staticData.geometry, ringMaterial);
     this.body.scale.set(0.9, 0.9, 0.9);
 
@@ -295,33 +328,102 @@ function LandOrb(x, y, z) {
 }
 
 LandOrb.prototype.animate = function(t, cameraZ) {
-    if(loopBack(this.obj, cameraZ)) {
-        chooseUnoccupiedLocationAndSize(this.obj, TronWorld.maxDiameter.orb);
-    }
-
+    loopBack(this.obj, cameraZ);
     const speed = 0.1;
     const f = (this.obj.position.z - cameraZ + this.animationZ) * speed;
-    var s = linstep(f, 2, 6);
+    var s = linstep(f, 4, 8);
     this.body.position.y = -1 + s;
-    this.ring.material.uniforms.time.value = linstep(f, 0, 6);
+    this.ring.material.uniforms.time.value = linstep(f, 2, 8);
 }
 
-function getTronMaterial(url, repeat) {
-    var texture  = texureLoader.load(url);
-    texture.magFilter = THREE.NearestFilter;
-    texture.minFilter = THREE.LinearMipMapLinearFilter;
-    if(repeat) {
-        texture.wrapS = THREE.RepeatWrapping;
-        texture.wrapT = THREE.RepeatWrapping;
-        texture.repeat.set( repeat, repeat );
+function GroundDisc(obj, scale) {
+    if(!GroundDisc.staticData) {
+        GroundDisc.staticData = {
+            geometry: new THREE.PlaneBufferGeometry( 2, 2 ),
+            texture:  texureLoader.load('../textures/tron5.png')
+        }
     }
-    return new THREE.MeshLambertMaterial({
-        color:       TronWorld.darkColor,
-        emissiveMap: texture,
-        emissive:    0xFFFFFF
-    });
+
+    /* Each disc must have a separate material because the different
+     * disc have a different time constant */
+    var discMaterial = new THREE.ShaderMaterial( {
+        vertexShader:   GroundDisc.vertexShader,
+        fragmentShader: GroundDisc.fragmentShader,
+        uniforms: {
+            time:     {value: 1.0 },
+            texture1: {value: GroundDisc.staticData.texture}
+        },
+        transparent: true
+    } );
+
+    this.obj = new THREE.Mesh(GroundDisc.staticData.geometry, discMaterial);
+    this.obj.rotation.x = -Math.PI/2;
+    this.obj.position.y = 0.01;
+    this.obj.scale.set(scale, scale, 1.);
+    obj.add(this.obj);
 }
 
+GroundDisc.prototype.animate = function(t) {
+    this.obj.material.uniforms.time.value = t;
+}
+
+function getTronGlowDecal() {
+    if(!this.glowDecal) {
+        var emissiveMap  = texureLoader.load('../textures/tron1.png');
+        emissiveMap.magFilter = THREE.NearestFilter;
+        emissiveMap.minFilter = THREE.LinearMipMapLinearFilter;
+        this.glowDecal = new THREE.MeshLambertMaterial({
+            map:         emissiveMap,
+            emissiveMap: emissiveMap,
+            emissive:    0xFFFFFF,
+            transparent: true,
+        });
+    }
+    return this.glowDecal;
+}
+
+function getTronBaseMaterial(repeatU) {
+    if(!this.bodyMaterial) {
+        this.bodyMaterial = new THREE.MeshPhongMaterial({
+            color:       TronWorld.darkColor,
+            normalMap:   getTronNormalMap(repeatU),
+            normalScale: new THREE.Vector2(0.25, 0.25),
+            emissiveMap: getTronEmmisiveMap(),
+            emissive: 0xFFFFFF
+        });
+    }
+    return this.bodyMaterial;
+}
+
+function getTronGlowMaterial() {
+    if(!this.glowMaterial) {
+        this.glowMaterial = new THREE.MeshBasicMaterial({
+            color: 0x00FFFF
+        });
+    }
+    return this.glowMaterial;
+}
+
+function getTronNormalMap(repeatU) {
+    if(!this.normalMap) {
+        var normalMap = texureLoader.load('../textures/tron4.png');
+        normalMap.wrapS = THREE.RepeatWrapping;
+        normalMap.wrapT = THREE.RepeatWrapping;
+        normalMap.repeat.set(repeatU || 1.5, 1.5);
+        this.normalMap = normalMap;
+    }
+    return this.normalMap;
+}
+
+function getTronEmmisiveMap(repeat) {
+    if(!this.emissiveMap) {
+        this.emissiveMap = texureLoader.load('../textures/tron6.png');
+        emissiveMap.wrapS = THREE.RepeatWrapping;
+        emissiveMap.wrapT = THREE.RepeatWrapping;
+        emissiveMap.repeat.set(1, 1);
+    }
+    return this.emissiveMap;
+}
 /* I am using a multi-line functional comment trick for embedding GLSL code legibly.
  *
  *   http://stackoverflow.com/questions/805107/creating-multiline-strings-in-javascript
@@ -364,8 +466,7 @@ void main()  {
 GridFloor.vertexShader = function() {/*!
 uniform   float   far;
 varying   float   depth;
-
-varying vec2 vUv;
+varying   vec2    vUv;
 
 void main() {
    vUv         = uv;
@@ -380,14 +481,15 @@ GridFloor.fragmentShader = function() {/*!
 precision mediump float;
 varying   vec2    vUv;
 varying   float   depth;
+uniform   vec3    color;
 
 void main()  {
    vec2 uv        = mod(vUv * 25., 1.);
-   vec2 thickness = vec2(0.02);
-   vec2 blur      = vec2(0.01);
+   vec2 thickness = vec2(0.01);
+   vec2 blur      = vec2(0.005);
    vec2 g =   smoothstep(0.5 - thickness - blur, 0.5 - thickness,         uv)
             - smoothstep(0.5 + thickness,        0.5 + thickness + blur, uv);
-   gl_FragColor = vec4(0., 1., 1., 1.) * (g.x + g.y) * (1. - depth);
+   gl_FragColor = vec4(mix(color, vec3(0., 1., 1.), (g.x + g.y)) * (1. - depth), 1.);
 }
 */}.getComment();
 
@@ -430,5 +532,26 @@ uniform   sampler2D texture1;
 void main()  {
    vec2 uv      = vUv;
    gl_FragColor = texture2D(texture1, vec2(uv.x * 0.25 + clamp(time, 0., 1.) * 0.75, uv.y));
+}
+*/}.getComment();
+
+GroundDisc.vertexShader = function() {/*!
+varying vec2 vUv;
+
+void main() {
+   vUv         = uv;
+   gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+}
+*/}.getComment();
+
+GroundDisc.fragmentShader = function() {/*!
+precision mediump   float;
+varying   vec2      vUv;
+uniform   float     time;
+uniform   sampler2D texture1;
+
+void main()  {
+   vec2 uv      = (vUv - vec2(0.5, 0.5)) * 2.;
+   gl_FragColor = texture2D(texture1, vec2(clamp(time, 0., 1.), length(uv)));
 }
 */}.getComment();
