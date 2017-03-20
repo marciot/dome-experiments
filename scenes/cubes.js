@@ -42,6 +42,12 @@ function setupScene(scene) {
     scene.add(box);
     boxes.push(box);
 
+    // Hello, World!
+    var text = getTextElement("Hello, Dome!", 6);
+    text.position.z = -8;
+    text.position.y = 0;
+    scene.add(text);
+
     RendererConfig.animationCallback = function(t) {
         boxes.forEach(
             function(box) {
