@@ -49,7 +49,7 @@ varying   vec2 vUv;
 #define M_PI 3.1415926535897932384626433832795
 
 void main() {
-    vUv         = vec2(uv.x - 0.5, 0.5 - uv.y);
+    vUv         = vec2(0.5 - uv.x, 0.5 - uv.y);
     gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
 }
 */}.getComment();
