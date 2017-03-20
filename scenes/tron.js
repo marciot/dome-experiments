@@ -1,7 +1,10 @@
-/* This is my attempt to recreate Spherible - Purp Cycle in code.
- * The original video is here:
+/* This is my attempt to recreate Purp Cycle in real-time THREE.js
+ * and GLSL
  *
- *    https://vimeo.com/97887646
+ * Based on:
+ *
+ *  Daniel Arnett's, "Spherible - Purp Cycle" (https://vimeo.com/97887646)
+ *  Beeple's "purpcycle (loop)"               (https://vimeo.com/85265188)
  */
 
 var animatedObjects = [];
@@ -12,19 +15,18 @@ TronWorld = {
         z:        500
     },
     animateWithin: {
-        zMin:      50,
-        zMax:     200,
+        zMax:     150,
         xMax:     100
     },
     separation: {
         rings:    101,
         pillars:    7,
-        orbs:      11,
+        orbs:      13,
     },
     maxDiameter: {
         ring:       5,
-        pillar:     9,
-        orb:       15
+        pillar:    15,
+        orb:       25
     },
     corridorWidth: 5.5,
     motionSpeed:   20,
@@ -78,6 +80,11 @@ function setupScene(scene) {
         animatedObjects.push(orb);
     }
 
+    var credit = getTextElement("Purp Cycle Remade\nReal-time animation in THREE.js", 2);
+    credit.position.z = -3;
+    credit.position.y = -0.75;
+    RendererConfig.camera.rig.add(credit);
+
     RendererConfig.animationCallback = function(t) {
         var cameraZ = -t * TronWorld.motionSpeed;
         RendererConfig.camera.rig.position.z = cameraZ;
@@ -126,6 +133,13 @@ function TronLayout() {
             obj.scale.set(scale, scale, scale);
         } while(scale == 0);
     }
+}
+
+// Returns a time value which is zero when the object first becomes
+// visible in the pehiphery. This ensures that interesting animations
+// happen when they can be seen.
+function animationTime(obj, cameraZ) {
+    return -(cameraZ - obj.position.z - Math.abs(obj.position.x));
 }
 
 function loopBack(obj, cameraZ, r) {
@@ -248,7 +262,7 @@ function LightPillar(x, y, z) {
             side: THREE.DoubleSide
         } );
         this.ring = new THREE.Mesh(LightPillar.staticData.geometry, ringMaterial);
-        this.base = new THREE.Mesh(LightPillar.staticData.geometry, getTronBaseMaterial());
+        this.base = new THREE.Mesh(LightPillar.staticData.geometry, getTronPillarMaterial());
         this.obj.add(this.base);
         this.obj.add(this.ring);
         this.base.scale.set(0.8, 1., 0.8);
@@ -261,8 +275,11 @@ function LightPillar(x, y, z) {
         this.beam.scale.set(0.25, 1., 0.25);
         this.setHeight(this.beam, 50);
     }
-
-    this.animationZ = TronWorld.animateWithin.zMin + Math.random() * (TronWorld.animateWithin.zMax - TronWorld.animateWithin.zMin);
+    if(this.style === 1) {
+        this.animationOffset = Math.random() * TronWorld.animateWithin.zMax;
+    } else {
+        this.animationOffset = Math.random() * 25;
+    }
 }
 
 function linstep(t, min, max) {
@@ -276,22 +293,20 @@ LightPillar.prototype.setHeight = function(obj, h) {
 
 LightPillar.prototype.setBeamThickness = function(t) {
     this.beam.scale.x = this.beam.scale.z = t * 0.25 + 0.0001;
-    this.beam.material.visible = t > 0.01;
+    this.setHeight(this.beam, t > 0.01 ? 50 : 0.001);
 }
 
 LightPillar.prototype.animate = function(t, cameraZ) {
     loopBack(this.obj, cameraZ);
-
     const speed = 0.05;
-    const f = (this.obj.position.z - cameraZ + this.animationZ) * speed;
-
+    const f = animationTime(this.obj, cameraZ - this.animationOffset) * speed;
     if(this.style === 1) {
-        this.ring.material.uniforms.time.value = linstep(f, 0, 6);
-        this.setHeight(this.base, linstep(f, 3, 5));
-        this.setHeight(this.beam, linstep(f, 8, 9) * 50);
+        this.ring.material.uniforms.time.value = linstep(f, -5, 0);
+        this.setHeight(this.base, linstep(f, -2, 0));
+        this.setHeight(this.beam, linstep(f,  0, 4) * 50);
     } else {
-        this.disc.animate(linstep(f, 0, 6));
-        this.setBeamThickness(linstep(f, 6, 9));
+        this.disc.animate(linstep(f, -5, 2));
+        this.setBeamThickness(linstep(f, -0.5, 4));
     }
 }
 
@@ -324,16 +339,15 @@ function LandOrb(x, y, z) {
     this.obj.position.set(x, y, z);
     this.obj.add(this.body);
     this.obj.add(this.ring);
-    this.animationZ = TronWorld.animateWithin.zMin + Math.random() * (TronWorld.animateWithin.zMax - TronWorld.animateWithin.zMin);
+    this.animationOffset = Math.random() * TronWorld.animateWithin.zMax;
 }
 
 LandOrb.prototype.animate = function(t, cameraZ) {
     loopBack(this.obj, cameraZ);
     const speed = 0.1;
-    const f = (this.obj.position.z - cameraZ + this.animationZ) * speed;
-    var s = linstep(f, 4, 8);
-    this.body.position.y = -1 + s;
-    this.ring.material.uniforms.time.value = linstep(f, 2, 8);
+    const f = animationTime(this.obj, cameraZ - this.animationOffset) * speed;
+    this.body.position.y                   = linstep(f, 0, 4) - 1;
+    this.ring.material.uniforms.time.value = linstep(f, -2, 4);
 }
 
 function GroundDisc(obj, scale) {
@@ -382,6 +396,19 @@ function getTronGlowDecal() {
     return this.glowDecal;
 }
 
+function getTronPillarMaterial() {
+    if(!this.pillarMaterial) {
+        this.pillarMaterial = new THREE.MeshPhongMaterial({
+            color:       TronWorld.darkColor,
+            normalMap:   getTronNormalMap(),
+            normalScale: new THREE.Vector2(0.25, 0.25),
+            emissiveMap: texureLoader.load('../textures/tron7.png'),
+            emissive:    0xFFFFFF
+        });
+    }
+    return this.pillarMaterial;
+}
+
 function getTronBaseMaterial(repeatU) {
     if(!this.bodyMaterial) {
         this.bodyMaterial = new THREE.MeshPhongMaterial({
@@ -418,9 +445,8 @@ function getTronNormalMap(repeatU) {
 function getTronEmmisiveMap(repeat) {
     if(!this.emissiveMap) {
         this.emissiveMap = texureLoader.load('../textures/tron6.png');
-        emissiveMap.wrapS = THREE.RepeatWrapping;
-        emissiveMap.wrapT = THREE.RepeatWrapping;
-        emissiveMap.repeat.set(1, 1);
+        this.emissiveMap.wrapS = THREE.RepeatWrapping;
+        this.emissiveMap.wrapT = THREE.RepeatWrapping;
     }
     return this.emissiveMap;
 }

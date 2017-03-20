@@ -33,34 +33,8 @@ function setupScene(scene) {
     mesh.rotation.y = -Math.PI/2;
     scene.add( mesh );
     
-    var credit = getTextElement("Spherible - Purp Cycle - By Daniel Arnett", 6);
+    var credit = getTextElement("Spherible - Purp Cycle\nBy Daniel Arnett", 6);
     credit.position.z = -8;
     credit.position.y = 0;
     scene.add(credit);
-}
-
-function getTextElement(text, scale) {
-    const font       = "Bold 40px Arial";
-    const fillStyle  = "white";
-    const height     = 50;
-    
-    var canvas    = document.createElement('canvas');
-    var ctx       = canvas.getContext('2d');
-    ctx.font      = font;
-    ctx.fillStyle = fillStyle;
-    
-    var textWidth = ctx.measureText(text).width;
-    canvas.width  = textWidth;
-    canvas.height = height;
-    ctx.font      = font;
-    ctx.fillStyle = fillStyle;
-    ctx.fillText(text, 0, 40);
-    
-    var textMaterial = new THREE.MeshBasicMaterial( {
-        map:         new THREE.Texture(canvas),
-        transparent: true
-    });
-    textMaterial.map.needsUpdate = true;
-    var textMesh = new THREE.Mesh( new THREE.PlaneBufferGeometry(scale, scale * height/textWidth), textMaterial );
-    return textMesh;
 }
