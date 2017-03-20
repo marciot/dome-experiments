@@ -94,6 +94,7 @@ function setupScene(scene) {
         for(var i = 0; i < animatedObjects.length; i++) {
             animatedObjects[i].animate(t, cameraZ);
         }
+        flare.animate(t);
     }
 }
 
@@ -161,7 +162,10 @@ function LensFlare(x, y, z) {
                 fragmentShader: LensFlare.fragmentShader,
                 depthTest: false,
                 blending: THREE.AdditiveBlending,
-                transparent: true
+                transparent: true,
+                uniforms: {
+                    time: {value: 1.0 }
+                },
             } )
         }
     }
@@ -171,6 +175,10 @@ function LensFlare(x, y, z) {
     );
     flare.position.set(x, y, z);
     this.obj = flare;
+}
+
+LensFlare.prototype.animate = function(t) {
+    this.obj.material.uniforms.time.value = t;
 }
 
 function GridFloor(x, y, z) {
@@ -465,14 +473,15 @@ void main() {
 LensFlare.fragmentShader = function() {/*!
 precision lowp    float;
 varying   vec2    vUv;
+uniform   float   time;
 
 float noise(float a) {
    return
-     + sin(a *  16.) * 0.12
-     - sin(a *   8.) * 0.3
-     - sin(a *   4.) * 0.3
-     - sin(a *   2.) * 0.3
-     - sin(a *   1.) * 0.3
+     + sin(a *  16. + time) * 0.12
+     - sin(a *   8. + time) * 0.3
+     - sin(a *   4. + time) * 0.3
+     - sin(a *   2.       ) * 0.3
+     - sin(a *   1.       ) * 0.3
 ;}
 
 void main()  {
