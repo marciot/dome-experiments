@@ -20,9 +20,10 @@ RendererConfig = {
         startingPosition:   new THREE.Vector3(0, 5 * feetToMeters, 0),
         /* The cameraRig member carries the camera. Move this around to
         animate the viewpoint */
-        rig:        null,
-        near:       .1,
-        far:        1000
+        rig:         null,
+        near:        .1,
+        far:         1000,
+        cubeMapSize: 1024
     },
     dome: {
         radius:             35.0 * feetToMeters / 2,
@@ -87,43 +88,40 @@ Function.prototype.getComment = function() {
 };
 
 WebVRDomeRenderer.vertexShader = function() {/*!
-attribute vec3 position;
-attribute vec2 uv;
-uniform   mat4 projectionMatrix;
-uniform   mat4 modelViewMatrix;
-varying   vec2 vUv;
+attribute vec3  position;
+attribute vec2  uv;
+uniform   mat4  projectionMatrix;
+uniform   mat4  modelViewMatrix;
+varying   float latitude;
+varying   float longitude;
+
+#define M_PI 3.1415926535897932384626433832795
+
 void main() {
-   vUv = vec2( 1.- uv.x, uv.y );
+   latitude  = (1.0 - uv.y) * M_PI;
+   longitude =  2.  * uv.x  * M_PI;
    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
 }
 */}.getComment();
 
 WebVRDomeRenderer.fragmentShader = function() {/*!
-precision mediump     float;
-uniform   samplerCube map;
-varying   vec2        vUv;
-
-#define M_PI 3.1415926535897932384626433832795
+precision highp float;
+uniform         samplerCube map;
+varying         float latitude;
+varying         float longitude;
 
 void main()  {
-    vec2  uv        = vUv;
-    float longitude = (1.0 - uv.x) * 2. * M_PI + M_PI/2.;
-    float latitude  = (1.0 - uv.y) * M_PI;
-
+    float sinOfLatitude = sin( latitude );
     vec3 dir = vec3(
-        -sin( longitude ) * sin( latitude ),
+        -cos( longitude ) * sinOfLatitude,
          cos( latitude ),
-        -cos( longitude ) * sin( latitude )
+         sin( longitude ) * sinOfLatitude
     );
-    normalize( dir );
-
-    gl_FragColor = vec4( textureCube( map, dir ).rgb, 1. );
+    gl_FragColor = textureCube( map, dir );
 }
 */}.getComment();
 
 function WebVRDomeRenderer( renderer ) {
-    const desiredCubeMapSize = 2048;
-
     this.renderer = renderer;
 
     /* For doing the warpping, we use a scene that consists of
@@ -211,7 +209,7 @@ function WebVRDomeRenderer( renderer ) {
     this.cubeCamera = new THREE.CubeCamera(
         RendererConfig.camera.near,
         RendererConfig.camera.far,
-        Math.min(maxSize, desiredCubeMapSize)
+        Math.min(maxSize, RendererConfig.camera.cubeMapSize)
     );
     cameraRig.add(this.cubeCamera);
     this.cubeCamera.rotation.x = -RendererConfig.dome.inclination;

@@ -406,7 +406,6 @@ function getBodyMaterial(repeatU) {
         this.bodyMaterial = new THREE.MeshPhongMaterial({
             color:       TronWorld.darkColor,
             normalMap:   getNormalMap(repeatU),
-            //normalScale: new THREE.Vector2(0.25, 0.25),
             emissiveMap: getEmmisiveMap(),
             emissive: 0xFFFFFF
         });

@@ -17,7 +17,8 @@ RendererConfig = {
         animate the viewpoint */
         rig:        null,
         near:       .1,
-        far:        1000
+        far:        1000,
+        cubeMapSize: 1024
     }
 };
 
@@ -40,39 +41,36 @@ attribute vec3 position;
 attribute vec2 uv;
 uniform   mat4 projectionMatrix;
 uniform   mat4 modelViewMatrix;
-varying   vec2 vUv;
+varying   float longitude;
+varying   float latitude;
+
+#define M_PI 3.1415926535897932384626433832795
+
 void main() {
-    vUv         = vec2( 1.- uv.x, uv.y );
+    longitude = -2. * M_PI * (uv.x - 0.5);
+    latitude  = -1. * M_PI * (uv.y - 1.0);
     gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
 }
 */}.getComment();
 
 PanoramaRenderer.fragmentShader = function() {/*!
-precision mediump     float;
+precision highp       float;
 uniform   samplerCube map;
-varying   vec2        vUv;
-
-#define M_PI 3.1415926535897932384626433832795
+varying   float longitude;
+varying   float latitude;
 
 void main()  {
-    vec2  uv        = vUv;
-    float longitude = uv.x * 2. * M_PI - M_PI;
-    float latitude  = (1.0 - uv.y) * M_PI;
-
+    float sinOfLatitude = -sin( latitude );
     vec3 dir = vec3(
-        -sin( longitude ) * sin( latitude ),
-         cos( latitude ),
-        -cos( longitude ) * sin( latitude )
+        sin( longitude ) * sinOfLatitude,
+        cos( latitude ),
+        cos( longitude ) * sinOfLatitude
     );
-    normalize( dir );
-
-    gl_FragColor = vec4( textureCube( map, dir ).rgb, 1. );
+    gl_FragColor = textureCube( map, dir );
 }
 */}.getComment();
 
 function PanoramaRenderer( renderer ) {
-    const desiredCubeMapSize = 2048;
-
     this.renderer = renderer;
 
     /* For doing the warpping, we use a scene that consists of
@@ -110,7 +108,7 @@ function PanoramaRenderer( renderer ) {
     this.cubeCamera = new THREE.CubeCamera(
         RendererConfig.camera.near,
         RendererConfig.camera.far,
-        Math.min(maxSize, desiredCubeMapSize)
+        Math.min(maxSize, RendererConfig.camera.cubeMapSize)
     );
     cameraRig.add(this.cubeCamera);
     cameraRig.position.copy(RendererConfig.camera.startingPosition);

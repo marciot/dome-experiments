@@ -17,7 +17,8 @@ RendererConfig = {
         animate the viewpoint */
         rig:        null,
         near:       .1,
-        far:        1000
+        far:        1000,
+        cubeMapSize: 1024
     },
     dome: {
         inclination:        20 * degreesToRadians,
@@ -44,38 +45,37 @@ attribute vec2 uv;
 uniform   mat4 projectionMatrix;
 uniform   mat4 modelViewMatrix;
 varying   vec2 vUv;
+
+#define M_PI 3.1415926535897932384626433832795
+
 void main() {
-    vUv         = vec2( 1.- uv.x, uv.y );
+    vUv         = vec2(uv.x - 0.5, 0.5 - uv.y);
     gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
 }
 */}.getComment();
 
 FullDomeRenderer.fragmentShader = function() {/*!
-precision mediump     float;
+precision highp       float;
 uniform   samplerCube map;
 varying   vec2        vUv;
 
 #define M_PI 3.1415926535897932384626433832795
 
 void main()  {
-    vec2 uv         = vUv - vec2(0.5, 0.5);
-    float longitude = atan(uv.x,uv.y);
-    float latitude  = length(uv) * M_PI;
-
+    float l             = length(vUv);
+    float latitude      = l * M_PI;
+    float sinOfLatitude = sin( latitude );
+    float cosOfLatitude = cos( latitude );
     vec3 dir = vec3(
-        -sin( longitude ) * sin( latitude ),
-         cos( latitude ),
-        -cos( longitude ) * sin( latitude )
+          vUv.x/l * sinOfLatitude,
+                    cosOfLatitude,
+          vUv.y/l * sinOfLatitude
     );
-    normalize( dir );
-
-    gl_FragColor = vec4( textureCube( map, dir ).rgb, 1. );
+    gl_FragColor = textureCube( map, dir );
 }
 */}.getComment();
 
 function FullDomeRenderer( renderer ) {
-    const desiredCubeMapSize = 2048;
-
     this.renderer = renderer;
 
     /* For doing the warpping, we use a scene that consists of
@@ -113,7 +113,7 @@ function FullDomeRenderer( renderer ) {
     this.cubeCamera = new THREE.CubeCamera(
         RendererConfig.camera.near,
         RendererConfig.camera.far,
-        Math.min(maxSize, desiredCubeMapSize)
+        Math.min(maxSize, RendererConfig.camera.cubeMapSize)
     );
     cameraRig.add(this.cubeCamera);
     this.cubeCamera.rotation.x = -RendererConfig.dome.inclination;
