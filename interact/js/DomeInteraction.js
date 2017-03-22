@@ -198,7 +198,7 @@ function DomeInteraction(createParticipant, removeParticipant) {
     }
     new DomeEventListener(
         {key: 'u7htss9n8pz257b9'},
-        "domeInteraction",
+        "domeInteraction2",
         {
             interaction:      interactCallback,
             connectionClosed: connectionClosed
