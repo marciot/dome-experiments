@@ -18,7 +18,12 @@ RendererConfig = {
         rig:        null,
         near:       .1,
         far:        1000
-    }
+    },
+    dome: {
+        radius:             35.0 * feetToMeters / 2,
+        inclination:        20 * degreesToRadians,
+        fullSphere:         false
+    },
 };
 
 /* Trick for inline strings for GLSL code:

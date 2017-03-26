@@ -21,9 +21,19 @@ RendererConfig = {
         cubeMapSize: 1024
     },
     dome: {
+        radius:             35.0 * feetToMeters / 2,
         inclination:        20 * degreesToRadians,
-    }
+        fullSphere:         false
+    },
 };
+
+// Load defaults from session storage
+
+var val = sessionStorage.getItem('defaultCubeMapResolution');
+if(val) {
+    console.log("cubeMapSize from session storage", val);
+    RendererConfig.camera.cubeMapSize = parseInt(val);
+}
 
 /* Trick for inline strings for GLSL code:
      http://stackoverflow.com/questions/805107/creating-multiline-strings-in-javascript
@@ -75,6 +85,24 @@ void main()  {
 }
 */}.getComment();
 
+function getDomeGeometry(radius, fullSphere) {
+    var geometry = new THREE.SphereBufferGeometry(
+        radius, 64, 64,
+        0, Math.PI*2,
+        0, fullSphere ? Math.PI : Math.PI/2
+    );
+
+    /* If rendering a half sphere, the UV texture coordinates
+     * need to be halved in the y direction. */
+    if(!fullSphere) {
+        var uv = geometry.attributes.uv.array;
+        for(var i = 1; i < uv.length; i += 2) {
+            uv[i] = uv[i]/2 + 0.5;
+        }
+    }
+    return geometry;
+}
+
 function FullDomeRenderer( renderer ) {
     this.renderer = renderer;
 
@@ -119,6 +147,21 @@ function FullDomeRenderer( renderer ) {
     this.cubeCamera.rotation.x = -RendererConfig.dome.inclination;
     cameraRig.position.copy(RendererConfig.camera.startingPosition);
     RendererConfig.camera.rig = cameraRig;
+
+    /* If we have a half-dome, obstructing the lower half of
+     * the cube camera with a hemisphere improves performance on
+     * complex scenes. */
+    if(!RendererConfig.dome.fullSphere) {
+        var domeGeometry = getDomeGeometry(RendererConfig.dome.radius, RendererConfig.dome.fullSphere);
+
+        var shield = new THREE.Mesh(domeGeometry, new THREE.MeshBasicMaterial({
+            color: 0x000000,
+            side: THREE.BackSide
+        }));
+        shield.rotation.x = Math.PI;
+        shield.scale.set(0.10, 0.10, 0.10);
+        this.cubeCamera.add(shield);
+    }
 }
 
 FullDomeRenderer.prototype.setSize = function( width, height ) {

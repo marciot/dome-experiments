@@ -1,9 +1,9 @@
-function getTextElement(text, scale) {
+function getTextElement(text, scale, color) {
     const lines      = text.split('\n');
     const fontSizePx = 40;
     const lineSizePx = 50;
     const font       = "Bold " + fontSizePx + "px Arial";
-    const fillStyle  = "white";
+    const fillStyle  = color || "white";
     
     var canvas    = document.createElement('canvas');
     var ctx       = canvas.getContext('2d');

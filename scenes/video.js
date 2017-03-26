@@ -3,7 +3,7 @@
  */
 
 function setupScene(scene) {
-    var geometry = new THREE.SphereBufferGeometry( 500, 60, 40 );
+    var geometry = new THREE.SphereBufferGeometry( RendererConfig.dome.radius, 60, 40 );
     geometry.scale( -1, 1, 1 );
     
     /* Video from https://vimeo.com/97887646 */

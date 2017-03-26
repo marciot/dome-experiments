@@ -19,8 +19,21 @@ RendererConfig = {
         near:       .1,
         far:        1000,
         cubeMapSize: 1024
-    }
+    },
+    dome: {
+        radius:             35.0 * feetToMeters / 2,
+        inclination:        20 * degreesToRadians,
+        fullSphere:         false
+    },
 };
+
+// Load defaults from session storage
+
+var val = sessionStorage.getItem('defaultCubeMapResolution');
+if(val) {
+    console.log("cubeMapSize from session storage", val);
+    RendererConfig.camera.cubeMapSize = parseInt(val);
+}
 
 /* Trick for inline strings for GLSL code:
      http://stackoverflow.com/questions/805107/creating-multiline-strings-in-javascript

@@ -73,6 +73,14 @@ RendererConfig = {
     backgroundColor:      0x555555
 };
 
+// Load defaults from session storage
+
+var val = sessionStorage.getItem('defaultCubeMapResolution');
+if(val) {
+    console.log("cubeMapSize from session storage", val);
+    RendererConfig.camera.cubeMapSize = parseInt(val);
+}
+
 /* Trick for inline strings for GLSL code:
      http://stackoverflow.com/questions/805107/creating-multiline-strings-in-javascript
  */
@@ -121,6 +129,24 @@ void main()  {
 }
 */}.getComment();
 
+function getDomeGeometry(radius, fullSphere) {
+    var geometry = new THREE.SphereBufferGeometry(
+        radius, 64, 64,
+        0, Math.PI*2,
+        0, fullSphere ? Math.PI : Math.PI/2
+    );
+
+    /* If rendering a half sphere, the UV texture coordinates
+     * need to be halved in the y direction. */
+    if(!fullSphere) {
+        var uv = geometry.attributes.uv.array;
+        for(var i = 1; i < uv.length; i += 2) {
+            uv[i] = uv[i]/2 + 0.5;
+        }
+    }
+    return geometry;
+}
+
 function WebVRDomeRenderer( renderer ) {
     this.renderer = renderer;
 
@@ -141,24 +167,10 @@ function WebVRDomeRenderer( renderer ) {
     var theater = new THREE.Object3D();
     this.scene.add(theater);
 
-    this.dome = new THREE.Mesh(
-        new THREE.SphereBufferGeometry(RendererConfig.dome.radius, 64, 64,
-            0, Math.PI*2,
-            0, RendererConfig.dome.fullSphere ? Math.PI : Math.PI/2
-        ),
-        this.material
-    );
+    var domeGeometry = getDomeGeometry(RendererConfig.dome.radius, RendererConfig.dome.fullSphere);
+    this.dome = new THREE.Mesh(domeGeometry, this.material);
     this.dome.rotation.x = -RendererConfig.dome.inclination;
     theater.add(this.dome);
-
-    /* If rendering a half sphere, the UV texture coordinates
-     * need to be halved in the y direction. */
-    if(!RendererConfig.dome.fullSphere) {
-        var uv = this.dome.geometry.attributes.uv.array;
-        for(var i = 1; i < uv.length; i += 2) {
-            uv[i] = uv[i]/2 + 0.5;
-        }
-    }
 
     // The seats and floor are shifted down by eyeLevel, so that
     // the user's eyes lie approximately at the center of the
@@ -215,6 +227,19 @@ function WebVRDomeRenderer( renderer ) {
     this.cubeCamera.rotation.x = -RendererConfig.dome.inclination;
     cameraRig.position.copy(RendererConfig.camera.startingPosition);
     RendererConfig.camera.rig = cameraRig;
+
+    /* If we have a half-dome, obstructing the lower half of
+     * the cube camera with a hemisphere improves performance on
+     * complex scenes. */
+    if(!RendererConfig.dome.fullSphere) {
+        var shield = new THREE.Mesh(domeGeometry, new THREE.MeshBasicMaterial({
+            color: 0x000000,
+            side: THREE.BackSide
+        }));
+        shield.rotation.x = Math.PI;
+        shield.scale.set(0.10, 0.10, 0.10);
+        this.cubeCamera.add(shield);
+    }
 }
 
 WebVRDomeRenderer.prototype.update = function(dt, scene ) {
