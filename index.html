@@ -77,7 +77,7 @@
                 <td></td>
                 <th colspan="2">WebVR Preview</th>
                 <th colspan="2">Dome Projection</th>
-                <th colspan="2">Source Code</th>
+                <th colspan="1">Source Code</th>
                 <th colspan="1">Notes</th>
             </tr>
         </table>
@@ -87,7 +87,8 @@
                 <td class="footnotes">
                 i. This example allows audience participation using smartphones.<br>
                 g. This example uses advanced GLSL (OpenGL Shader Language)<br>
-                v. This example requires a &ldquo;VR Ready&rdquo; graphics card for acceptable performance.
+                v. This example requires a &ldquo;VR Ready&rdquo; graphics card for acceptable performance.<br>
+                nc. ShaderToys are generally licensed for non-commercial use (CC-BY-NC-SA 3.0). For non-free exhibition, please contact the author via the ShaderToy link.
                 </td>
                 <td>
                     <p>Projection Resolution:</p>
@@ -119,9 +120,19 @@
                     '<td><a href="demo/?scene=' + scene + '&renderer=FullDomeRenderer">FullDome</a></td>' +
                     '<td>' +
                         '<a href="https://github.com/marciot/dome-experiments/tree/master/scenes/' + scene + '.js">GitHub</a></td>' +
-                        (extra.shadertoy ? '<td><a href="https://www.shadertoy.com/view/' + extra.shadertoy +'">ShaderToy</a></td>' : "<td>-</td>") +
-                    '</td>' +
                     '<td class="notes">' + (notes || "") + '</td>';
+                demos.appendChild(tr);
+            }
+
+            function addShaderToy(name, id, notes) {
+                var tr = document.createElement("tr");
+                tr.innerHTML = '<th class="demo">' + name + '</th>' +
+                    '<td><a href="demo/?scene=shadertoy&shader=' + id + '&renderer=WebVRRenderer">WebVR</a></td>' +
+                    '<td><a href="demo/?scene=shadertoy&shader=' + id + '&renderer=WebVRDomeRenderer">WebVRDome</a></td>' +
+                    '<td><a href="demo/?scene=shadertoy&shader=' + id + '&renderer=PanoramaRenderer">Panorama</a></td>' +
+                    '<td><a href="demo/?scene=shadertoy&shader=' + id + '&renderer=FullDomeRenderer">FullDome</a></td>' +
+                    '<td><a href="https://www.shadertoy.com/view/' + id +'">ShaderToy</a></td>' +
+                    '<td class="notes">' + "g, nc" + (notes ? ", " + notes : "") + '</td>';
                 demos.appendChild(tr);
             }
 
@@ -130,9 +141,11 @@
             addDemo("video");
             addDemo("tron",  "g");
             addDemo("brush", "i");
-            /*addDemo("maze", "g",        {shadertoy: "Mdd3R8"});
-            addDemo("cave", "g",        {shadertoy: "MlXSWX"});
-            addDemo("mountains", "g,v", {shadertoy: "MdX3Rr"});*/
+
+            addShaderToy("cells",  "MsXXWH");
+            addShaderToy("maze",   "Xs2yzW");
+            addShaderToy("cave",   "Xs2cRW");
+            addShaderToy("clouds", "XslGRr");
 
             document.getElementById("setResolution").addEventListener("change", function(e) {
                 if(event.target.value == "default") {
