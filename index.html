@@ -88,7 +88,7 @@
                 i. This example allows audience participation using smartphones.<br>
                 g. This example uses advanced GLSL (OpenGL Shader Language)<br>
                 v. This example requires a &ldquo;VR Ready&rdquo; graphics card for acceptable performance.<br>
-                nc. ShaderToys are generally licensed for non-commercial use (CC-BY-NC-SA 3.0). For non-free exhibition, please contact the author via the ShaderToy link.
+                nc. ShaderToys are generally licensed for non-commercial use (CC-BY-NC-SA 3.0). For non-free exhibition, please contact the individual shader author via the ShaderToy link.
                 </td>
                 <td>
                     <p>Projection Resolution:</p>
@@ -124,15 +124,20 @@
                 demos.appendChild(tr);
             }
 
-            function addShaderToy(name, id, notes) {
+            function addShaderToy(name, id, extra) {
+                var extra = extra || {};
                 var tr = document.createElement("tr");
+                if(extra.ambulatory) {
+                    id += "&ambulatory=1";
+                    console.log("Enable ambulatory");
+                }
                 tr.innerHTML = '<th class="demo">' + name + '</th>' +
                     '<td><a href="demo/?scene=shadertoy&shader=' + id + '&renderer=WebVRRenderer">WebVR</a></td>' +
                     '<td><a href="demo/?scene=shadertoy&shader=' + id + '&renderer=WebVRDomeRenderer">WebVRDome</a></td>' +
                     '<td><a href="demo/?scene=shadertoy&shader=' + id + '&renderer=PanoramaRenderer">Panorama</a></td>' +
                     '<td><a href="demo/?scene=shadertoy&shader=' + id + '&renderer=FullDomeRenderer">FullDome</a></td>' +
-                    '<td><a href="https://www.shadertoy.com/view/' + id +'">ShaderToy</a></td>' +
-                    '<td class="notes">' + "g, nc" + (notes ? ", " + notes : "") + '</td>';
+                    '<td><a href="https://www.shadertoy.com/view/' + id + '">ShaderToy</a></td>' +
+                    '<td class="notes">g, nc' + (extra.notes ? ", " + extra.notes : "") + '</td>';
                 demos.appendChild(tr);
             }
 
@@ -142,10 +147,19 @@
             addDemo("tron",  "g");
             addDemo("brush", "i");
 
-            addShaderToy("cells",  "MsXXWH");
-            addShaderToy("maze",   "Xs2yzW");
-            addShaderToy("cave",   "Xs2cRW");
-            addShaderToy("clouds", "XslGRr");
+            var tr = document.createElement("tr");
+            tr.classList.add("heading");
+            tr.innerHTML='<td></td><th colspan="6">ShaderToy API Demos</th>';
+            demos.appendChild(tr);
+
+            addShaderToy("blobs",     "4ll3R7");
+            addShaderToy("704.2",     "Xdj3Dt", {ambulatory: true});
+            addShaderToy("maze",      "Xs2yzW");
+            addShaderToy("cells",     "MsXXWH");
+            addShaderToy("cave",      "Xs2cRW");
+            addShaderToy("truchet",   "ldfGWn", {ambulatory: true});
+            addShaderToy("grid",      "4dSGW1");
+            addShaderToy("clouds",    "XslGRr");
 
             document.getElementById("setResolution").addEventListener("change", function(e) {
                 if(event.target.value == "default") {
