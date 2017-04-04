@@ -39,9 +39,15 @@ function setupScene(scene) {
                         "../textures/shadertoy" + shaderInputs[i].src,
                         textureLoaded.bind(null, i)
                     );
+                    if(shaderInputs[i].sampler.vflip == "false") {
+                        texture.flipY = false;
+                    }
                     if(shaderInputs[i].sampler.wrap == "repeat") {
                         texture.wrapS = THREE.RepeatWrapping;
                         texture.wrapT = THREE.RepeatWrapping;
+                    }
+                    if(shaderInputs[i].sampler.srgb == "true") {
+                        texture.encoding = THREE.sRGBEncoding;
                     }
                     textures[shaderInputs[i].channel] = texture;
                     console.log("Sampler:", shaderInputs[i].sampler);
