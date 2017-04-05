@@ -109,9 +109,9 @@ function setupScene(scene) {
             shader.info.username = fields[1];
         }
 
-        var credit = getTextElement(shader.info.name + "\nShadertoy by " + shader.info.username, 4);
+        var credit = getTextElement(shader.info.name + "\nShadertoy by " + shader.info.username, 1);
         credit.position.z = -4;
-        credit.position.y = 0.55;
+        credit.position.y = 0.65;
         scene.add(credit);
     }
 

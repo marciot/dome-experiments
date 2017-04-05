@@ -10,9 +10,9 @@ function setupScene(scene) {
     scene.add(light);
         
     // Advertise the remote control url
-    var text = getTextElement("Go to dome.marciot.com/interact on\nyour Android phone to participate.", 12);
-    text.position.z = -8;
-    text.position.y = 0;
+    var text = getTextElement("Go to \u201Cdome.marciot.com/interact\u201D on\nyour Android phone to participate.", 0.8);
+    text.position.z = -4;
+    text.position.y = .65;
     scene.add(text);
     
     // Manage participants

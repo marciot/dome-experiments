@@ -33,8 +33,8 @@ function setupScene(scene) {
     mesh.rotation.y = -Math.PI/2;
     scene.add( mesh );
     
-    var credit = getTextElement("Spherible - Purp Cycle\nBy Daniel Arnett", 6);
-    credit.position.z = -8;
-    credit.position.y = 0;
+    var credit = getTextElement("Spherible - Purp Cycle\nBy Daniel Arnett", 1);
+    credit.position.z = -4;
+    credit.position.y = 0.65;
     scene.add(credit);
 }

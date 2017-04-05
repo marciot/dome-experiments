@@ -72,7 +72,7 @@ function loadUrl(url, successCallback, errorCallback) {
 
 /* THREE.js Utility Functions */
 
-function getTextElement(text, scale, color) {
+function getTextElement(text, scaleY, color) {
     const lines      = text.split('\n');
     const fontSizePx = 40;
     const lineSizePx = 50;
@@ -103,7 +103,7 @@ function getTextElement(text, scale, color) {
         transparent: true
     });
     material.map.needsUpdate = true;
-    var geometry = new THREE.PlaneBufferGeometry(scale, scale * canvas.height/canvas.width);
+    var geometry = new THREE.PlaneBufferGeometry(scaleY * canvas.width/canvas.height, scaleY);
     var mesh = new THREE.Mesh(geometry, material);
     return mesh;
 }

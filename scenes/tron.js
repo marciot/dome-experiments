@@ -83,9 +83,9 @@ function setupScene(scene) {
         animatedObjects.push(orb);
     }
 
-    var credit = getTextElement("\u201CPurp Cycle\u201D Remade\nReal-time animation in THREE.js", 2);
-    credit.position.z = -3;
-    credit.position.y = -0.75;
+    var credit = getTextElement("\u201CPurp Cycle\u201D Remade\nReal-time animation in THREE.js", 0.75);
+    credit.position.z = -4;
+    credit.position.y = -0.95;
     RendererConfig.camera.rig.add(credit);
 
     RendererConfig.animationCallback = function(t) {

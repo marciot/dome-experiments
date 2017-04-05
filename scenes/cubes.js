@@ -43,7 +43,7 @@ function setupScene(scene) {
     boxes.push(box);
 
     // Hello, World!
-    var text = getTextElement("Hello, Dome!", 6);
+    var text = getTextElement("Hello, Dome!", 1);
     text.position.z = -8;
     text.position.y = 0;
     scene.add(text);
