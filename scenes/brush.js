@@ -10,10 +10,12 @@ function setupScene(scene) {
     scene.add(light);
         
     // Advertise the remote control url
-    var text = getTextElement("Go to \u201Cdome.marciot.com/interact\u201D on\nyour Android phone to participate.", 0.8);
-    text.position.z = -4;
-    text.position.y = .65;
-    scene.add(text);
+    function displayInteractionUrl(url) {
+        var text = getTextElement("Go to \u201C" + url + "\u201D on\nyour Android phone to participate.", 0.8);
+        text.position.z = -4;
+        text.position.y = .65;
+        scene.add(text);
+    }
     
     // Manage participants
     function createParticipant(e, peer) {
@@ -24,7 +26,12 @@ function setupScene(scene) {
     function removeParticipant(participant) {
         scene.remove(participant.obj);
     }
-    var interact = new DomeInteraction(createParticipant, removeParticipant);
+    function stateChanged(state) {
+        if(state == 'open') {
+            displayInteractionUrl("dome.marciot.com/interact" + interact.getUrlSuffix());
+        }
+    }
+    var interact = new DomeInteraction(createParticipant, removeParticipant, stateChanged);
     
     // Animate the participants
     RendererConfig.animationCallback = function(t) {

@@ -1,29 +1,42 @@
-function PeerCommunications(peerOptions, roomId, callbacks) {
+DomeInteractionConfig = {
+    apiKey:     'u7htss9n8pz257b9',
+    peerPrefix: 'domeInteraction'
+}
+
+function PeerCommunications(peerOptions, roomPrefix, callbacks) {
     var me = this;
     
-    this.roomId      = roomId;
+    this.roomPrefix  = roomPrefix;
     this.connections = [];
     this.callbacks   = callbacks;
     
-    this.join = function (asMaster) {
+    this.join = function (asMaster, instanceId) {
+        const roomId = me.roomPrefix + (instanceId ? instanceId : "");
+
         function errorFunc(err) {
-            console.log('error', err.type);
-            if(me.callbacks.stateChanged) {
-                me.callbacks.stateChanged('error', err.type);
+            if(asMaster && err.type == 'unavailable-id') {
+                /* The peer-id is unavailable, try incrementing the instance id */
+                window.setTimeout(me.join.bind(me, asMaster, instanceId ? (instanceId + 1) : 1), 10);
+            } else {
+                console.log('error', err.type);
+                if(me.callbacks.stateChanged) {
+                    me.callbacks.stateChanged('error', err.type);
+                }
             }
         }
         function peerOpenFunc(id) {
             console.log("Connected. My id is", id);
-            if(me.callbacks.stateChanged) {
-                me.callbacks.stateChanged('open');
-            }
             me.isJoined    = true;
             me.isMaster    = false;
             me.myPeerId    = id;
+            me.instanceId  = instanceId;
+            if(me.callbacks.stateChanged) {
+                me.callbacks.stateChanged('open');
+            }
         }
-        console.log("Attempting to connect to", me.roomId);
+        console.log("Attempting to connect to", roomId);
         if(asMaster) {
-            me.peer = new Peer(me.roomId, peerOptions);
+            me.peer = new Peer(roomId, peerOptions);
         } else {
             me.peer = new Peer(peerOptions);
         }
@@ -31,7 +44,7 @@ function PeerCommunications(peerOptions, roomId, callbacks) {
         me.peer.on('open', peerOpenFunc);
         me.peer.on('connection', me.processConnection.bind(me));
         if(!asMaster) {
-            me.processConnection(me.peer.connect(me.roomId));
+            me.processConnection(me.peer.connect(roomId));
         }
     }
     
@@ -70,17 +83,25 @@ function PeerCommunications(peerOptions, roomId, callbacks) {
     this.setState = function(state, info) {
         console.log(state, info);
     }
+
+    this.getUrlSuffix = function() {
+        return me.instanceId ? "#" + me.instanceId : "";
+    }
 }
 
 function DomeParticipant(options) {
+    // Extract the hashbang after the URL and use that as an instance id
+    var m          = window.location.href.match(/#(\d)+$/);
+    var instanceId = m && m[1];
+
     this.comm = new PeerCommunications(
-        {key: options.apiKey},
-        options.roomId,
+        {key: DomeInteractionConfig.apiKey},
+        DomeInteractionConfig.peerPrefix,
         {
             stateChanged: options.statusCallback
         }
     );
-    this.comm.join(false);
+    this.comm.join(false, instanceId);
     
     var vrDisplay = null;
     function setupVR(callback) {
@@ -160,18 +181,22 @@ function DomeEventListener(peerOptions, roomId, callbacks) {
         e.pointing = pointing;
         callbacks.interaction(e, peer);
     }
-    this.controller = new PeerCommunications(
+    this.communications = new PeerCommunications(
         peerOptions,
         roomId,
         {
             receivedData: receivedData,
-            connectionClosed: callbacks.connectionClosed
+            connectionClosed: callbacks.connectionClosed,
+            stateChanged: callbacks.stateChanged
         }
     );
-    this.controller.join(true);
+    this.communications.join(true);
+    this.getUrlSuffix = function () {
+        return this.communications.getUrlSuffix();
+    }
 }
 
-function DomeInteraction(createParticipant, removeParticipant) {
+function DomeInteraction(createParticipant, removeParticipant, stateChanged) {
     var participants = [];
     var participantMap = new Map();
     function interactCallback(e, peer) {
@@ -196,15 +221,19 @@ function DomeInteraction(createParticipant, removeParticipant) {
             removeParticipant(participant);
         }
     }
-    new DomeEventListener(
-        {key: 'u7htss9n8pz257b9'},
-        "domeInteraction2",
+    this.listener = new DomeEventListener(
+        {key: DomeInteractionConfig.apiKey},
+        DomeInteractionConfig.peerPrefix,
         {
             interaction:      interactCallback,
-            connectionClosed: connectionClosed
+            connectionClosed: connectionClosed,
+            stateChanged:     stateChanged
         }
     );
     this.animate = function(t) {
         participants.forEach(function(p) {p.animate(t)});
+    }
+    this.getUrlSuffix = function () {
+        return this.listener.getUrlSuffix();
     }
 }
