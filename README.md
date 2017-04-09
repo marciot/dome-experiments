@@ -38,7 +38,7 @@ Please visit my [Patreon page] to learn how you can support this open-source pro
 [logo]: https://github.com/marciot/dome-experiments/raw/master/images/banner2.jpg "A dome screenshot"
 [DomeLab]: https://www.facebook.com/groups/DomeLab
 [THREE.CubemapToEquirectangular]: https://github.com/spite/THREE.CubemapToEquirectangular
-[CefWithSyphon]: https://github.com/vibber/CefWithSyphon
+[CefWithSyphon]: https://github.com/marciot/CefWithSyphon
 [Blendy Dome VJ]: http://www.blendydomevj.com
 [THREE.js]: https://threejs.org
 [WebVR polyfill]: https://github.com/googlevr/webvr-polyfill
