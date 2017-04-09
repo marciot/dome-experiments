@@ -33,6 +33,9 @@ function setupScene(scene) {
 }
 
 function DomeParticipant() {
+    const trailLength = 200;
+    const creepSpeed  = 0.1;
+
     if(!DomeParticipant.staticData) {
         var loader = new THREE.TextureLoader();
         var stroke = loader.load('../textures/stroke.png');
@@ -61,14 +64,14 @@ function DomeParticipant() {
                 clearMeshLine();
                 lastPos.set(0,0,0);
             }
-            if(lastPos.distanceTo(dot.position) > 0.05) {
+            if(lastPos.distanceTo(dot.position) > 0.1) {
                 addPointToMeshLine(dot.position);
                 lastPos.copy(dot.position);
             } else {
-                shortenVisibleLine(0.5);
+                shortenVisibleLine(creepSpeed);
             }
         } else {
-            shortenVisibleLine(0.5);
+            shortenVisibleLine(creepSpeed);
         }
         lastTouchState = e.touchState;
     }
@@ -77,9 +80,9 @@ function DomeParticipant() {
     }
     
     /* Create the MeshLine (based on code from https://github.com/spite/THREE.MeshLine/blob/master/demo/js/main-spinner.js) */
-    var geo = new Float32Array( 200 * 3 );
+    var geo = new Float32Array( trailLength * 3 );
     var g = new MeshLine();
-    g.setGeometry( geo, function( p ) { return p; } );
+    g.setGeometry( geo );
     
     var lineMaterial = new MeshLineMaterial( {
         useMap: true,
@@ -117,18 +120,18 @@ function DomeParticipant() {
     }
 
     function lengthenVisibleLine() {
-        meshLineVisiblePoints = Math.min(geo.length, meshLineVisiblePoints + 1);
+        meshLineVisiblePoints = Math.min(trailLength, meshLineVisiblePoints + 1);
         updateMeshLineTexture();
     }
 
     function shortenVisibleLine(howMuch) {
-        meshLineVisiblePoints = Math.max(0, meshLineVisiblePoints - howMuch || 1);
+        meshLineVisiblePoints = Math.max(0, meshLineVisiblePoints - (howMuch || 1));
         updateMeshLineTexture();
     }
 
     function updateMeshLineTexture() {
         if(meshLineVisiblePoints > 1) {
-            var startU = (geo.length - meshLineVisiblePoints)/geo.length;
+            var startU = (trailLength - meshLineVisiblePoints)/trailLength;
             var rangeU = 1 - startU;
             lineMaterial.uniforms.uvScale.value.set ( 1/rangeU,  1);
             lineMaterial.uniforms.uvOffset.value.set(  -startU,  0);
