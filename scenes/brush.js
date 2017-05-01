@@ -1,4 +1,11 @@
-const domeDiameterInMeters = 10.668;
+DemoConfig = {
+    stroke: {
+        nPoints:    200,
+        creepSpeed: 0.1
+    },
+};
+
+var textureLoader = new THREE.TextureLoader();
 
 function setupScene(scene) {
     // Add lights to the scene
@@ -8,6 +15,8 @@ function setupScene(scene) {
     var light = new THREE.PointLight( 0xffffff, 1 );
     light.position.set( 10, 15, 20 );
     scene.add(light);
+
+    var world = domeCentricReferenceFrame(scene);
         
     // Advertise the remote control url
     function displayInteractionUrl(url) {
@@ -18,20 +27,12 @@ function setupScene(scene) {
     }
     
     // Manage participants
-    function createParticipant(e, peer) {
-        var participant = new DomeParticipant();
-        scene.add(participant.obj);
-        return participant;
-    }
-    function removeParticipant(participant) {
-        scene.remove(participant.obj);
-    }
     function stateChanged(state) {
         if(state == 'open') {
             displayInteractionUrl("dome.marciot.com/interact" + interact.getUrlSuffix());
         }
     }
-    var interact = new DomeInteraction(createParticipant, removeParticipant, stateChanged);
+    var interact = new DomeInteraction(id => new MyParticipant(world), stateChanged);
     
     // Animate the participants
     RendererConfig.animationCallback = function(t) {
@@ -39,112 +40,154 @@ function setupScene(scene) {
     }
 }
 
-function DomeParticipant() {
-    const trailLength = 200;
-    const creepSpeed  = 0.1;
+class Cursor {
+    constructor(scene, color, callback) {
+        if(!Cursor.geometry) {
+            Cursor.geometry = new THREE.SphereBufferGeometry(0.1);
+        }
 
-    if(!DomeParticipant.staticData) {
-        var loader = new THREE.TextureLoader();
-        var stroke = loader.load('../textures/stroke.png');
-        DomeParticipant.staticData = {
-            geometry: new THREE.SphereBufferGeometry(0.1),
-            stroke: stroke
-        };
-        stroke.wrapS = stroke.wrapT = THREE.RepeatWrapping;
+        var material = new THREE.MeshLambertMaterial({color: color});
+        this.dot = new THREE.Mesh(MyParticipant.staticData.geometry, material);
+        scene.add(this.dot);
+
+        this.lastPos = new THREE.Vector3();
+        this.lastTouchState = null;
     }
     
-    var participantColor = new THREE.Color().setHSL(Math.random(), 1, 0.5);
-    var holdingColor = new THREE.Color(0xffffff);
-    var material = new THREE.MeshLambertMaterial({color: 0xffff00});
-    var dot = new THREE.Mesh(DomeParticipant.staticData.geometry, material);    
-    this.obj = new THREE.Object3D();
-    this.obj.add(dot);
-    
-    var lastPos = new THREE.Vector3();
-    var lastTouchState;
-    this.interact = function(e) {
-        dot.position.copy(e.pointing).multiplyScalar(domeDiameterInMeters/2);
-        dot.material.color = (e.touchState == "holding") ? holdingColor : participantColor;
+    update(e) {
+        this.dot.position.copy(e.pointing).multiplyScalar(RendererConfig.dome.radius);
+        this.dot.material.color = (e.touchState == "holding") ? this.holdingColor : this.participantColor;
         
         if(e.touchState == "holding") {
-            if(lastTouchState != "holding") {
-                clearMeshLine();
-                lastPos.set(0,0,0);
+            if(this.lastTouchState != "holding") {
+                this.clearMeshLine();
+                this.lastPos.set(0,0,0);
             }
-            if(lastPos.distanceTo(dot.position) > 0.1) {
-                addPointToMeshLine(dot.position);
-                lastPos.copy(dot.position);
+            if(this.lastPos.distanceTo(this.dot.position) > 0.1) {
+                this.addPointToMeshLine(this.dot.position);
+                this.lastPos.copy(this.dot.position);
             } else {
-                shortenVisibleLine(creepSpeed);
+                this.shortenVisibleLine(DemoConfig.stroke.creepSpeed);
             }
         } else {
-            shortenVisibleLine(creepSpeed);
+            this.shortenVisibleLine(DemoConfig.stroke.creepSpeed);
         }
-        lastTouchState = e.touchState;
+        this.lastTouchState = e.touchState;
     }
-    
-    this.animate = function(t) {
+}
+
+class MyParticipant extends DomeParticipant {
+    constructor(scene) {
+        super();
+
+        this.scene = scene;
+        this.obj = new THREE.Object3D();
+        scene.add(this.obj);
+
+        if(!MyParticipant.staticData) {
+            var stroke = textureLoader.load('../textures/stroke.png');
+            MyParticipant.staticData = {
+                geometry: new THREE.SphereBufferGeometry(0.1),
+                stroke: stroke
+            };
+            stroke.wrapS = stroke.wrapT = THREE.RepeatWrapping;
+        }
+
+        this.participantColor = new THREE.Color().setHSL(Math.random(), 1, 0.5);
+        this.holdingColor     = new THREE.Color(0xffffff);
+
+        var material = new THREE.MeshLambertMaterial({color: this.participantColor});
+        this.dot = new THREE.Mesh(MyParticipant.staticData.geometry, material);
+        this.obj.add(this.dot);
+
+        this.lastPos = new THREE.Vector3();
+        this.lastTouchState = null;
+
+        /* Create the MeshLine (based on code from https://github.com/spite/THREE.MeshLine/blob/master/demo/js/main-spinner.js) */
+        var geo = new Float32Array( DemoConfig.stroke.nPoints * 3 );
+        this.ml = new MeshLine();
+        this.ml.setGeometry( geo );
+        this.mlVisiblePoints = 0;
+
+        this.lineMaterial = new MeshLineMaterial( {
+            useMap:          true,
+            map:             MyParticipant.staticData.stroke,
+            color:           this.participantColor,
+            opacity:         1,
+            resolution:      new THREE.Vector2(2048, 2048),
+            sizeAttenuation: false,
+            lineWidth:       100,
+            near:            RendererConfig.camera.near,
+            far:             RendererConfig.camera.far,
+            depthTest:       false,
+            blending:        THREE.NormalBlending,
+            transparent:     true,
+            repeat:          new THREE.Vector2( 1,1 )
+        });
+
+        var mesh = new THREE.Mesh( this.ml.geometry, this.lineMaterial );
+        mesh.frustumCulled  = false;
+        this.obj.add(mesh);
     }
-    
-    /* Create the MeshLine (based on code from https://github.com/spite/THREE.MeshLine/blob/master/demo/js/main-spinner.js) */
-    var geo = new Float32Array( trailLength * 3 );
-    var g = new MeshLine();
-    g.setGeometry( geo );
-    
-    var lineMaterial = new MeshLineMaterial( {
-        useMap: true,
-        map: DomeParticipant.staticData.stroke,
-        color: participantColor,
-        opacity: 1,
-        resolution: new THREE.Vector2(2048, 2048),
-        sizeAttenuation: false,
-        lineWidth: 100,
-        near: RendererConfig.camera.near,
-        far:  RendererConfig.camera.far,
-        depthTest: false,
-        blending: THREE.NormalBlending,
-        transparent: true,
-        repeat: new THREE.Vector2( 1,1 )
-    });
-    
-    var mesh = new THREE.Mesh( g.geometry, lineMaterial );
-    mesh.geo = geo;
-    mesh.g = g;
-    mesh.frustumCulled  = false;
-    this.obj.add(mesh);
-    
-    function addPointToMeshLine(p) {
-        g.advance(p);
-        lengthenVisibleLine();
+
+    disconnected() {
+        this.scene.remove(this.obj);
+    }
+
+    buttonDown(e) {
+        this.dot.material.color = this.holdingColor;
+        this.clearMeshLine();
+        this.lastPos.set(0,0,0);
+    }
+
+    buttonUp(e) {
+        this.dot.material.color = this.participantColor;
+    }
+
+    pointerMoved(e) {
+        this.dot.position.copy(e.pointing).multiplyScalar(RendererConfig.dome.radius);
+        if(e.touching && this.lastPos.distanceTo(this.dot.position) > 0.1) {
+            this.addPointToMeshLine(this.dot.position);
+            this.lastPos.copy(this.dot.position);
+        } else {
+            this.shortenVisibleLine(DemoConfig.stroke.creepSpeed);
+        }
+    }
+
+    animate(t, dt) {
+    }
+
+    addPointToMeshLine(p) {
+        this.ml.advance(p);
+        this.lengthenVisibleLine();
     }
 
     /* The visible length of the line is controlled by changing the
     /* uv offsets to the texture. This is faster than adding or
      * removing points from the MeshLine. */
-    var meshLineVisiblePoints = 0;
-    function clearMeshLine(p) {
-        meshLineVisiblePoints = 0;
+    clearMeshLine(p) {
+        this.mlVisiblePoints = 0;
     }
 
-    function lengthenVisibleLine() {
-        meshLineVisiblePoints = Math.min(trailLength, meshLineVisiblePoints + 1);
-        updateMeshLineTexture();
+    lengthenVisibleLine() {
+        this.mlVisiblePoints = Math.min(DemoConfig.stroke.nPoints, this.mlVisiblePoints + 1);
+        this.updateMeshLineTexture();
     }
 
-    function shortenVisibleLine(howMuch) {
-        meshLineVisiblePoints = Math.max(0, meshLineVisiblePoints - (howMuch || 1));
-        updateMeshLineTexture();
+    shortenVisibleLine(howMuch) {
+        this.mlVisiblePoints = Math.max(0, this.mlVisiblePoints - (howMuch || 1));
+        this.updateMeshLineTexture();
     }
 
-    function updateMeshLineTexture() {
-        if(meshLineVisiblePoints > 1) {
-            var startU = (trailLength - meshLineVisiblePoints)/trailLength;
+    updateMeshLineTexture() {
+        if(this.mlVisiblePoints > 1) {
+            var startU = (DemoConfig.stroke.nPoints - this.mlVisiblePoints)/DemoConfig.stroke.nPoints;
             var rangeU = 1 - startU;
-            lineMaterial.uniforms.uvScale.value.set ( 1/rangeU,  1);
-            lineMaterial.uniforms.uvOffset.value.set(  -startU,  0);
-            lineMaterial.visible = true;
+            this.lineMaterial.uniforms.uvScale.value.set ( 1/rangeU,  1);
+            this.lineMaterial.uniforms.uvOffset.value.set(  -startU,  0);
+            this.lineMaterial.visible = true;
         } else {
-            lineMaterial.visible = false;
+            this.lineMaterial.visible = false;
         }
     }
 }

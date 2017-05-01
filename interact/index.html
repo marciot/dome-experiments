@@ -47,11 +47,11 @@
         <script src="cordova.js"></script>
         <script src="../libs/peer.js/peer-modified.js"></script>
         <script src="js/cordova-setup.js"></script>
-        <script src="js/DomeInteraction.js"></script>
+        <script src="js/DomeClient.js"></script>
         
         <script src="../libs/webvr-polyfill/webvr-polyfill.min.js"></script>
         <script>
-            var participantOptions = {
+            var clientOptions = {
                 statusCallback: statusCallback,
                 touchElement: document.getElementById("touch")
             };
@@ -73,7 +73,7 @@
             
             window.onload = function() {
                 peerJsInit();
-                var pp = new DomeParticipant(participantOptions);
+                var pp = new DomeClient(clientOptions);
             }
             
             window.onerror = function(error) {

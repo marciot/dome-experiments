@@ -411,9 +411,10 @@ function startAnimation() {
     function animate() {
         updatePoseAndOrientation();
         
-        var t = clock.getElapsedTime();
+        var dt = clock.getDelta();
+        var t  = clock.getElapsedTime();
         if(RendererConfig.animationCallback) {
-            RendererConfig.animationCallback(t);
+            RendererConfig.animationCallback(t, dt);
         }
         domeRenderer.update(t, scene);
         

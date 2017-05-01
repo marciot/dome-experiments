@@ -23,7 +23,7 @@ RendererConfig = {
         radius:             35.0 * feetToMeters / 2,
         inclination:        20 * degreesToRadians,
         fullSphere:         false
-    },
+    }
 };
 
 /* Trick for inline strings for GLSL code:
@@ -109,9 +109,10 @@ function startAnimation() {
     // The animation routine
     function animate() {
         updatePoseAndOrientation();
-        var t = clock.getElapsedTime();
+        var dt = clock.getDelta();
+        var t  = clock.getElapsedTime();
         if(RendererConfig.animationCallback) {
-            RendererConfig.animationCallback(t);
+            RendererConfig.animationCallback(t, dt);
         }
         effect.render(scene, camera);
         vrDisplay.requestAnimationFrame(animate);

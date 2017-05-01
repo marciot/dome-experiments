@@ -19,6 +19,11 @@
         <script src="../libs/es6-collections.min.js"></script>
         <script src="../libs/es6-promise.min.js"></script>
         <script src="../libs/webvr-polyfill/webvr-polyfill.min.js"></script>
+
+        <!-- The following is used to load compressed meshes -->
+        <script src="../libs/draco/DRACOLoader.js"></script>
+
+        <!-- Utility code that may be used by all scenes -->
         <script src="../scenes/common.js"></script>
 
         <!-- The following is used by the brush demo -->
@@ -26,7 +31,8 @@
 
         <!-- The following files are used for interactive apps -->
         <script src="../libs/peer.js/peer.min.js"></script>
-        <script src="../interact/js/DomeInteraction.js"></script>
+        <script src="../interact/js/DomeClient.js"></script>
+        <script src="../interact/js/DomeMaster.js"></script>
 
         <script>
             /* Dynamically load scene and renderer based on URL. Example:

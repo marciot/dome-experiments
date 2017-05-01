@@ -173,9 +173,10 @@ function startAnimation() {
     
     // The animation routine
     function animate() {
-        var t = clock.getElapsedTime();
+        var dt = clock.getDelta();
+        var t  = clock.getElapsedTime();
         if(RendererConfig.animationCallback) {
-            RendererConfig.animationCallback(t);
+            RendererConfig.animationCallback(t, dt);
         }
         panoRender.render(scene);
         requestAnimationFrame( animate );
