@@ -29,28 +29,28 @@ function setupScene(scene) {
         new Mask(world, {
             url: "../models/MASCARA_veneciana_r_ml50k_cl10.drc",
             azimuth: 45,
-            sound: "../sounds/238500__madamvicious__female-ghost-crying.mp3"
+            sound: "../sounds/238500__madamvicious__female-ghost-crying.ogg"
         });
         new Mask(world, {
             url: "../models/African_Mask_ml10k_cl10.drc",
             azimuth: 90,
-            sound: "../sounds/379503__juliusmabe__creature-pant-fast.mp3"
+            sound: "../sounds/379503__juliusmabe__creature-pant-fast.ogg"
         });
         new Mask(world, {
             url: "../models/lynxfinal_2.drc",
             azimuth: -10,
-            sound: "../sounds/85163__cmusounddesign__jf-cat-purring.mp3"
+            sound: "../sounds/85163__cmusounddesign__jf-cat-purring.ogg"
         });
         new Mask(world, {
             url: "../models/Skull_ml50k_cl10.drc",
             azimuth: -75,
-            sound: "../sounds/146143__cycro__demon-chant-latin.mp3"
+            sound: "../sounds/146143__cycro__demon-chant-latin.ogg"
         });
         
         axeHotspot = new Mask(world, {
             azimuth:  -45,
             elevation: 60,
-            sound: "../sounds/160047__jorickhoofd__metal-rattle.mp3"
+            sound: "../sounds/160047__jorickhoofd__metal-rattle.ogg"
         });
         
         axe = new Axe(world, {azimuth:  -45});
