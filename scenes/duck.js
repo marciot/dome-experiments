@@ -83,9 +83,23 @@ function setupScene(scene) {
         }
         quacking.play();
     }
-        
+
+    // Advertise the remote control url
+    function displayInteractionUrl(url) {
+        var text = getTextElement("Go to \u201C" + url + "\u201D on\nyour Android phone to participate.", 0.8);
+        text.position.z = -4;
+        text.position.y = 4.65;
+        text.lookAt(new THREE.Vector3());
+        scene.add(text);
+    }
+    
     // Manage participants
-    var interact = new DomeInteraction(id => new MyParticipant(scene, backgroundHound));
+    function stateChanged(state) {
+        if(state == 'open') {
+            displayInteractionUrl("dome.marciot.com/interact" + interact.getUrlSuffix());
+        }
+    }
+    var interact = new DomeInteraction(id => new MyParticipant(scene, backgroundHound), stateChanged);
     
     // Animate the participants
     RendererConfig.animationCallback = function(t, dt) {
