@@ -256,6 +256,9 @@ WebVRDomeRenderer.prototype.update = function(dt, scene ) {
     if(this.raycastingFunction) {
         this.raycastingFunction(dt);
     }
+    if(this.interactionFunction) {
+        this.interactionFunction(dt);
+    }
 }
 
 WebVRDomeRenderer.prototype.enableTeleportation = function(viewer, camera) {
@@ -287,6 +290,48 @@ WebVRDomeRenderer.prototype.enableTeleportation = function(viewer, camera) {
         lastSelected = nowSelected;
         this.selectedMaterial.emissiveIntensity = gazeTime/RendererConfig.seats.teleportGazeTime;
     }
+}
+
+WebVRDomeRenderer.prototype.enableLocalInteraction = function(element, camera) {
+    var raycaster     = new THREE.Raycaster();
+    var mouse         = new THREE.Vector2(0,0);
+    var touching      = false;
+
+    this.interactionFunction = function(t) {
+        if(!RendererConfig.interaction) {
+            return;
+        }
+        raycaster.setFromCamera(mouse, camera);
+        var intersects = raycaster.intersectObject(this.dome, true);
+        for(var i = 0; i < intersects.length; i++) {
+            azimuth   = ((1 - intersects[i].uv.x) * 360 + 270) % 360;
+            elevation = intersects[i].uv.y        * 180 - 90;
+            RendererConfig.interaction.dispatchEventFromPolarCoordinates(azimuth, elevation, touching);
+        }
+    }
+
+    // Add local interaction
+    element.addEventListener('contextmenu', function(ev) {
+        ev.preventDefault();
+        return false;
+    }, false);
+
+    element.addEventListener('mousedown', function(ev) {
+        if(ev.button == 0) {
+            touching = true;
+            ev.preventDefault();
+            return false;
+        }
+    }, true);
+
+    element.addEventListener('mouseup', function(ev) {
+        touching = false;
+    }, false);
+
+    element.addEventListener('mousemove', function(event) {
+        mouse.x =   ( event.clientX / window.innerWidth  ) * 2 - 1;
+        mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+    }, false);
 }
 
 /* Function that generates geometry for the seats */
@@ -459,6 +504,7 @@ function startAnimation() {
     
     onWindowResize();
     domeRenderer.enableTeleportation(viewerBody, camera);
+    domeRenderer.enableLocalInteraction(renderer.domElement, camera, vrDisplay);
 }
 
 WebVRConfig.ALWAYS_APPEND_POLYFILL_DISPLAY = true;
