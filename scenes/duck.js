@@ -54,7 +54,7 @@ function setupScene(scene) {
     scene.add(audioListener);
     
     var quacking = new THREE.Audio(audioListener);
-    audioLoader.load('../sounds/duckhunt/quacking.mp3', buffer => {
+    audioLoader.load('../sounds/duckhunt/quacking.ogg', buffer => {
         quacking.setBuffer(buffer);
         quacking.setLoop(true);
     });
@@ -410,7 +410,7 @@ class ForegroundHound extends Sprite {
         ], 4);
         
         this.sound = new THREE.Audio(audioListener);
-        audioLoader.load('../sounds/duckhunt/sniff.mp3', buffer => {
+        audioLoader.load('../sounds/duckhunt/sniff.ogg', buffer => {
             this.sound.setBuffer(buffer);
             this.sound.play();
             this.soundReady = true;

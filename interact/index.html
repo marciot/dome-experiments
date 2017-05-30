@@ -49,6 +49,11 @@
         <script src="js/cordova-setup.js"></script>
         <script src="js/DomeClient.js"></script>
         
+        <script>
+            WebVRConfig = {
+                ALWAYS_APPEND_POLYFILL_DISPLAY: true
+            };
+        </script>
         <script src="../libs/webvr-polyfill/webvr-polyfill.min.js"></script>
         <script>
             var clientOptions = {
