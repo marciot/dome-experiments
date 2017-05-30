@@ -46,15 +46,15 @@
 
         <script src="cordova.js"></script>
         <script src="../libs/peer.js/peer-modified.js"></script>
+        <script src="../libs/es6-promise.min.js"></script>
         <script src="js/cordova-setup.js"></script>
         <script src="js/DomeClient.js"></script>
-        
         <script>
             WebVRConfig = {
                 ALWAYS_APPEND_POLYFILL_DISPLAY: true
             };
         </script>
-        <script src="../libs/webvr-polyfill/webvr-polyfill.min.js"></script>
+        <script src="../libs/webvr-polyfill/webvr-polyfill.js"></script>
         <script>
             var clientOptions = {
                 statusCallback: statusCallback,
@@ -81,9 +81,9 @@
                 var pp = new DomeClient(clientOptions);
             }
             
-            /*window.onerror = function(error) {
+            window.onerror = function(error) {
                 document.write(error);
-            };*/
+            };
         </script>
     </body>
 </html>

@@ -115,19 +115,23 @@ function DomeClient(options) {
             return;
         }
 
-        // Get the VRDisplay and save it for later.
-        navigator.getVRDisplays().then(
-            function(displays) {
-                for(var i = 0; i < displays.length; i++) {
-                    if(displays[i].capabilities.hasOrientation) {
-                        vrDisplay = displays[i];
-                        callback()
-                        return;
+        try {
+            // Get the VRDisplay and save it for later.
+            navigator.getVRDisplays().then(
+                function(displays) {
+                    for(var i = 0; i < displays.length; i++) {
+                        if(displays[i].capabilities.hasOrientation) {
+                            vrDisplay = displays[i];
+                            callback()
+                            return;
+                        }
                     }
+                    alert("WebVR is supported, but no VR displays found");
                 }
-                alert("WebVR is supported, but no VR displays found");
-            }
-        );
+            );
+        } catch(e) {
+            alert("Query of VRDisplays failed" + e.toString());
+        }
     }
 
     var touching = false;
