@@ -5539,8 +5539,10 @@ MouseKeyboardVRDisplay.prototype.animateKeyTransitions_ = function(angleName, ta
 };
 
 MouseKeyboardVRDisplay.prototype.onMouseDown_ = function(e) {
-  this.rotateStart_.set(e.clientX, e.clientY);
-  this.isDragging_ = true;
+  if(e.button == 2) {
+    this.rotateStart_.set(e.clientX, e.clientY);
+    this.isDragging_ = true;
+  }
 };
 
 // Very similar to https://gist.github.com/mrflix/8351020
