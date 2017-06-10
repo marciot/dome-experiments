@@ -147,7 +147,7 @@ function getDomeGeometry(radius, fullSphere) {
     return geometry;
 }
 
-function WebVRDomeRenderer( renderer ) {
+function WebVRDomeRenderer( renderer, vrDisplay ) {
     this.renderer = renderer;
 
     /* For doing the warpping, we use a scene that consists of
@@ -162,10 +162,10 @@ function WebVRDomeRenderer( renderer ) {
         side: THREE.DoubleSide
     } );
 
-    this.scene = new THREE.Scene();
+    this.theaterScene = new THREE.Scene();
 
     var theater = new THREE.Object3D();
-    this.scene.add(theater);
+    this.theaterScene.add(theater);
 
     var domeGeometry = getDomeGeometry(RendererConfig.dome.radius, RendererConfig.dome.fullSphere);
     this.dome = new THREE.Mesh(domeGeometry, this.material);
@@ -188,11 +188,11 @@ function WebVRDomeRenderer( renderer ) {
     if(RendererConfig.seats.visible) {
         // The theater only needs lighting if the seats are visible.
         var light = new THREE.AmbientLight( 0xffffff, 0.1 );
-        this.scene.add(light);
+        this.theaterScene.add(light);
 
         var light = new THREE.PointLight( 0xffffff, 0.2 );
         light.position.set( 0, 15, 0 );
-        this.scene.add(light);
+        this.theaterScene.add(light);
 
         this.seatMaterial = new THREE.MeshLambertMaterial();
         this.seats = new THREE.Object3D();
@@ -240,13 +240,30 @@ function WebVRDomeRenderer( renderer ) {
         shield.scale.set(0.10, 0.10, 0.10);
         this.cubeCamera.add(shield);
     }
+
+    /* Track the mouse, unless presenting, in which case the gaze target is in the middle of the screen */
+    var me    = this;
+    this.mouse = new THREE.Vector2(0,0);
+    renderer.domElement.addEventListener('mousemove', function(event) {
+        if(!vrDisplay.isPresenting) {
+            me.mouse.x =   ( event.clientX / window.innerWidth  ) * 2 - 1;
+            me.mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+        } else {
+            me.mouse.x = 0;
+            me.mouse.y = 0;
+        }
+    }, false);
 }
 
-WebVRDomeRenderer.prototype.update = function(dt, scene ) {
-    /* Step 1: Render the user's scene to the CubeCamera's texture */
+WebVRDomeRenderer.prototype.setProjectedScene = function(scene) {
+    this.projectedScene = scene;
+}
+
+WebVRDomeRenderer.prototype.update = function(dt) {
+    /* Step 1: Render the projected scene to the CubeCamera's texture */
     var autoClear = this.renderer.autoClear;
     this.renderer.autoClear = true;
-    this.cubeCamera.updateCubeMap( this.renderer, scene );
+    this.cubeCamera.updateCubeMap( this.renderer, this.projectedScene );
     this.renderer.autoClear = autoClear;
 
     /* Step 2: Assign the CubeCamera's texture to the dome's fragment shader */
@@ -263,12 +280,11 @@ WebVRDomeRenderer.prototype.update = function(dt, scene ) {
 
 WebVRDomeRenderer.prototype.enableTeleportation = function(viewer, camera) {
     var raycaster     = new THREE.Raycaster();
-    var gazePoint     = new THREE.Vector2(0,0);
     var lastSelected  = null;
     var gazeStartTime = 0;
     var me = this;
     this.raycastingFunction = function(t) {
-        raycaster.setFromCamera( gazePoint, camera );
+        raycaster.setFromCamera( this.mouse, camera );
         var intersects = raycaster.intersectObject(me.seats, true);
         var nowSelected = null;
         if (intersects.length) {
@@ -294,14 +310,13 @@ WebVRDomeRenderer.prototype.enableTeleportation = function(viewer, camera) {
 
 WebVRDomeRenderer.prototype.enableLocalInteraction = function(element, camera) {
     var raycaster     = new THREE.Raycaster();
-    var mouse         = new THREE.Vector2(0,0);
     var touching      = false;
 
     this.interactionFunction = function(t) {
         if(!RendererConfig.interaction) {
             return;
         }
-        raycaster.setFromCamera(mouse, camera);
+        raycaster.setFromCamera(this.mouse, camera);
         var intersects = raycaster.intersectObject(this.dome, true);
         for(var i = 0; i < intersects.length; i++) {
             azimuth   = ((1 - intersects[i].uv.x) * 360 + 270) % 360;
@@ -327,11 +342,11 @@ WebVRDomeRenderer.prototype.enableLocalInteraction = function(element, camera) {
     element.addEventListener('mouseup', function(ev) {
         touching = false;
     }, false);
+}
 
-    element.addEventListener('mousemove', function(event) {
-        mouse.x =   ( event.clientX / window.innerWidth  ) * 2 - 1;
-        mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
-    }, false);
+WebVRDomeRenderer.prototype.startPresenting = function() {
+    this.mouse.x = 0;
+    this.mouse.y = 0;
 }
 
 /* Function that generates geometry for the seats */
@@ -389,83 +404,59 @@ function placeSeats(obj, seatMaterial) {
 }
 
 /* Main function that kickstarts the animation loop */
-function startAnimation() {
+function setupDomeScene(vrDisplay) {
     var clock  = new THREE.Clock();
     
     var renderer = new THREE.WebGLRenderer();
+    renderer.setPixelRatio(Math.floor(window.devicePixelRatio));
     document.body.appendChild(renderer.domElement);
 
     var effect = new THREE.VREffect(renderer);
-    effect.setVRDisplay(vrDisplay);
+    effect.setSize(window.innerWidth, window.innerHeight);
     
-    var domeRenderer = new WebVRDomeRenderer(renderer);
+    var domeRenderer = new WebVRDomeRenderer(renderer, vrDisplay);
     
     var viewerBody = new THREE.Object3D();
     var camera = new THREE.PerspectiveCamera( RendererConfig.perspectiveCamera.fov, window.innerWidth / window.innerHeight, 0.1, 700 );
     viewerBody.add(camera);
-    viewerBody.position.y = -RendererConfig.seats.eyeLevel;
-    
-    // Inititalize WebVR
-    
-    var vrDisplay = null;
-    
-    function setupVR(sceneCallback) {
-        if(!navigator.getVRDisplays) {
-            alert("WebVR is not supported");
-            return;
-        }
+    domeRenderer.theaterScene.add(viewerBody);
 
-        // Get the VRDisplay and save it for later.
-        navigator.getVRDisplays().then(
-            function(displays) {
-                for(var i = 0; i < displays.length; i++) {
-                    if(displays[i].capabilities.hasOrientation) {
-                        vrDisplay = displays[0];
-                        effect.setVRDisplay(vrDisplay);
-                        sceneCallback();
-                        return;
-                    }
-                }
-                alert("WebVR is supported, but no VR displays found");
-            }
-        );
-    }
+    // Set up the scene that is rendered and projected
+    // on the dome. This is NOT the same scene that
+    // contains the theater itself and chairs.
+    var projectedScene  = new THREE.Scene();
+    setupScene(projectedScene);
+    projectedScene.add(RendererConfig.camera.rig);
+    domeRenderer.setProjectedScene(projectedScene);
 
-    // Call the user routine to setup the scene
-    var scene  = new THREE.Scene();
-    setupScene(scene);
-    scene.add(viewerBody);
-    scene.add(RendererConfig.camera.rig);
+    createVRButton(vrDisplay, function() {effect.requestPresent(); domeRenderer.startPresenting();});
 
+    domeRenderer.enableTeleportation(viewerBody, camera);
+    domeRenderer.enableLocalInteraction(renderer.domElement, camera);
+
+    var vrFrameData          = new VRFrameData();
     var headsetPose          = new THREE.Vector3();
     var headsetOrientation   = new THREE.Quaternion();
+    var standingTransform    = new THREE.Matrix4();
     function updatePoseAndOrientation() {
         // Get the headset position and orientation.
-        var pose = vrDisplay.getPose();
-        if (pose.position !== null) {
-            camera.position.fromArray(pose.position);
+        vrDisplay.getFrameData(vrFrameData);
+        if (vrFrameData.pose && vrFrameData.pose.position) {
+            camera.position.fromArray(vrFrameData.pose.position);
+            camera.position.applyMatrix4(standingTransform);
         } else {
             camera.position.y = RendererConfig.seats.eyeLevel;
         }
-        if (pose.orientation !== null) {
-            camera.quaternion.fromArray(pose.orientation);
+        if (vrFrameData.pose && vrFrameData.pose.orientation) {
+            camera.quaternion.fromArray(vrFrameData.pose.orientation);
         }
     }
-    
-    // The animation routine
-    function animate() {
-        updatePoseAndOrientation();
-        
-        var dt = clock.getDelta();
-        var t  = clock.getElapsedTime();
-        if(RendererConfig.animationCallback) {
-            RendererConfig.animationCallback(t, dt);
+    function updateStandingTransform() {
+        if(vrDisplay.stageParameters && vrDisplay.stageParameters.sittingToStandingTransform) {
+            standingTransform.fromArray(vrDisplay.stageParameters.sittingToStandingTransform);
         }
-        domeRenderer.update(t, scene);
-        
-        effect.render(domeRenderer.scene, camera);
-        vrDisplay.requestAnimationFrame(animate);
     }
+    updateStandingTransform();
     
     // The resize handler
     function onWindowResize() {
@@ -477,8 +468,26 @@ function startAnimation() {
     }
     window.addEventListener( 'resize', onWindowResize, false );
     
-    // Presentation button for WebVR capable devices.
-    function createButton() {
+    // The animation routine
+    function animate() {
+        updatePoseAndOrientation();
+
+        var dt = clock.getDelta();
+        var t  = clock.getElapsedTime();
+        if(RendererConfig.animationCallback) {
+            RendererConfig.animationCallback(t, dt);
+        }
+        domeRenderer.update(t);
+
+        effect.render(domeRenderer.theaterScene, camera);
+        vrDisplay.requestAnimationFrame(animate);
+    }
+    vrDisplay.requestAnimationFrame(animate);
+}
+
+// Presentation button for WebVR capable devices.
+function createVRButton(vrDisplay, callback) {
+    if(vrDisplay.capabilities.canPresent) {
         var btn = document.createElement("button");
         btn.innerText      = "Enter VR";
         btn.style.position = "absolute";
@@ -486,25 +495,38 @@ function startAnimation() {
         btn.style.right    = "5px";
         document.body.appendChild(btn);
         
-        btn.addEventListener("click", function() {effect.requestPresent()});
+        btn.addEventListener("click", callback);
         
         function vrPresentationChange() {
             btn.style.display = vrDisplay.isPresenting ? "none" : "block";
         };
         window.addEventListener('vrdisplaypresentchange', vrPresentationChange);
     }
-    
+}
+
+function startAnimation() {
     // Setup WebVR and begin the animation
-    setupVR(function() {
-        vrDisplay.requestAnimationFrame(animate);
-        if(vrDisplay.capabilities.canPresent) {
-            createButton();
+    var vrDisplay = null;
+    function setupVR(sceneCallback) {
+        if(!navigator.getVRDisplays) {
+            alert("WebVR is not supported");
+            return;
         }
-    });
-    
-    onWindowResize();
-    domeRenderer.enableTeleportation(viewerBody, camera);
-    domeRenderer.enableLocalInteraction(renderer.domElement, camera, vrDisplay);
+        // Get the VRDisplay and save it for later.
+        navigator.getVRDisplays().then(
+            function(displays) {
+                for(var i = 0; i < displays.length; i++) {
+                    if(displays[i].capabilities.hasOrientation) {
+                        vrDisplay = displays[0];
+                        sceneCallback(vrDisplay);
+                        return;
+                    }
+                }
+                alert("WebVR is supported, but no VR displays found");
+            }
+        );
+    }
+    setupVR(setupDomeScene);
 }
 
 WebVRConfig.ALWAYS_APPEND_POLYFILL_DISPLAY = true;
