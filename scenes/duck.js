@@ -598,8 +598,11 @@ class Duck extends Sprite {
     }
     
     shot(callback) {
-        this.callback = callback;
-        this.act.next();
+        if(!this.wasShot) {
+            this.wasShot = true;
+            this.callback = callback;
+            this.act.next();
+        }
     }
     
     animate(t, dt) {
@@ -617,7 +620,8 @@ class Duck extends Sprite {
         var tree = (this.id < 3) ? 0 : Math.floor(Math.random() * GameConfig.treeAzimuth.length);
         var speed = 1.5 + Math.random();
         
-        this.dead = false;
+        this.dead                     = false;
+        this.wasShot                  = false;
         this.elevation                = 0;
         this.azimuth                  = GameConfig.treeAzimuth[tree];
         this.timeUntilDirectionChange = 0;
