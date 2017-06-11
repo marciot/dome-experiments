@@ -327,7 +327,8 @@ class Sprite {
                         alphaMap:    texureLoader.load(url),
                         side:        THREE.FrontSide,
                         transparent: true,
-                        color:       options.color
+                        color:       options.color,
+                        depthTest: false
                     }
                 );
             } else {
@@ -335,7 +336,8 @@ class Sprite {
                     {
                         map:         texureLoader.load(url),
                         side:        THREE.FrontSide,
-                        transparent: true
+                        transparent: true,
+                        depthTest: false
                     }
                 );
             }
@@ -413,7 +415,7 @@ class Reticle extends Sprite {
             return new THREE.Color().setHSL(hue, 1.0, lightness);
         }
         super(Reticle, '../textures/duckhunt/reticle_alphaMap.png', {
-            size: 0.25,
+            size: 0.45,
             color: maximallySparatedHues(Reticle.colorIndex++, 120, 120),
             unique: true // Each instance gets its own material
         });
