@@ -1,6 +1,20 @@
-/* This game is a based on Matt Surabian's "DuckHunt JS"
+/* This game uses the following model and sound assets:
  *
- * https://raw.githubusercontent.com/MattSurabian/DuckHunt-JS
+ *   Name              | Designer      | License  | Hyperlink
+ * ---------------     | ------------- | -------- | -----------
+ *   background.png    | Matt Surabian |  MIT     | https://github.com/MattSurabian/DuckHunt-JS
+ *   black_duck.png    | Matt Surabian |  MIT     | https://github.com/MattSurabian/DuckHunt-JS
+ *   bush.png          | Matt Surabian |  MIT     | https://github.com/MattSurabian/DuckHunt-JS
+ *   dog1.png          | Matt Surabian |  MIT     | https://github.com/MattSurabian/DuckHunt-JS
+ *   dog2.png          | Matt Surabian |  MIT     | https://github.com/MattSurabian/DuckHunt-JS
+ *   red_duck.png      | Matt Surabian |  MIT     | https://github.com/MattSurabian/DuckHunt-JS
+ *   tree.png          | Matt Surabian |  MIT     | https://github.com/MattSurabian/DuckHunt-JS
+ *
+ *   Sound             | Designer      | License  | Hyperlink
+ *  ------------------ | ------------  | -------- | -----------
+ *   quacking.ogg      | Matt Surabian |  MIT     | https://github.com/MattSurabian/DuckHunt-JS
+ *   sniff.ogg         | Matt Surabian |  MIT     | https://github.com/MattSurabian/DuckHunt-JS
+ *   victory.ogg       | Jim Hancock   |  CC0 1.0 | https://www.freesound.org/people/jimhancock/sounds/256128
  */
 GameConfig = {
     treeAzimuth: [7, 100, 128, 167, 303],
@@ -59,6 +73,11 @@ function setupScene(scene) {
         quacking.setLoop(true);
     });
     
+    var tada = new THREE.Audio(audioListener);
+    audioLoader.load('../sounds/duckhunt/tada.ogg', buffer => {
+        tada.setBuffer(buffer);
+    });
+
     var backdrop = new Backdrop(domeDiameterInMeters/2);
     scene.add(backdrop.representation);
     
@@ -120,6 +139,7 @@ function setupScene(scene) {
 
         if(nPlayers == 1) {
             displayStr("Round winner hit " + maxHits + " ducks");
+            tada.play();
         } else {
             displayStr(nPlayers + " participants tied for " + maxHits + " ducks");
         }

@@ -1,3 +1,23 @@
+/* This demonstration uses the following model and sound assets:
+ *
+ *  Name                        | Designer     | License  | Hyperlink
+ * ------------------------     | ------------ | -------- | -----------
+ * Hannya Mask 01               | MyDogJustice | CC-BY    | http://www.thingiverse.com/thing:27410
+ * African Mask                 | scampbell    | CC-BY-SA | http://www.thingiverse.com/thing:40831
+ * Venetian mask                | bqLabs       | CC-BY-SA | http://www.thingiverse.com/thing:1084182
+ * Celtic Skull (flat base)     | RevK         | CC-BY    | http://www.thingiverse.com/thing:188558
+ * Zheng3 Battle Axe Hairsticks | zheng3       | CC-BY-SA | http://www.thingiverse.com/thing:26864
+ * Lynx Mask                    | TheSonOfEgo  | CC-BY    | http://www.thingiverse.com/thing:1957833
+ *
+ *  Sound               | Author         |License    | Hyperlink
+ * ---------------------| --------       | --------- | ---------
+ * Female Ghost Crying  | MadameVicious  | CC0 1.0   | https://www.freesound.org/people/MadamVicious/sounds/238500/
+ * Demon Chant (Latin)  | cycro          | CC0 1.0   | https://www.freesound.org/people/cycro/sounds/146143/
+ * Creature Pant (Fast) | JuliusMabe     | CC BY 3.0 | https://www.freesound.org/people/JuliusMabe/sounds/379503/
+ * Metal rattle         | jorickhoofd    | CC BY 3.0 | https://www.freesound.org/people/jorickhoofd/sounds/160047/
+ * _jf Cat Purring      | cmusounddesign | CC BY 3.0 | https://www.freesound.org/people/cmusounddesign/sounds/85163/
+ *
+ */
 DemoConfig = {
     light: {
         distanceFromDome: 1.0

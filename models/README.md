@@ -7,7 +7,7 @@ The STL files were downloaded, simplified with MeshLab using the "Quadric Edge C
 
 # Source Material
 
-Name                         | Designer     | License  | Hyperlink 
+Name                         | Designer     | License  | Hyperlink
 ------------------------     | ------------ | -------- | -----------
 Hannya Mask 01               | MyDogJustice | CC-BY    | http://www.thingiverse.com/thing:27410
 African Mask                 | scampbell    | CC-BY-SA | http://www.thingiverse.com/thing:40831
