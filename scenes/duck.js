@@ -203,23 +203,23 @@ class Backdrop {
 }
 
 class Sprite {
-    constructor(staticClass, url, size, nCols, nRows) {
-        if(!nRows) {
+    constructor(staticClass, url, options) {
+        if(!options.nRows) {
             // If this sprite is non-animated, then create a
             // material that is shared by all instances.
-            this.loadMaterial(staticClass, url);
+            this.loadMaterial(staticClass, url, options);
         } else {
             // If this sprite is animated, then each instance
             // gets a unique material.
-            this.loadMaterial(this, url);
+            this.loadMaterial(this, url, options);
             this.material.map.wrapS = THREE.RepeatWrapping;
             this.material.map.wrapT = THREE.RepeatWrapping;
-            this.nCols = nCols;
-            this.nRows = nRows;
+            this.nCols = options.nCols;
+            this.nRows = options.nRows;
             this.material.map.repeat.set( 1/this.nCols, 1 / this.nRows );
         }
         this.representation = new THREE.Mesh(this.geometry, this.material);
-        this.representation.scale.set(size, size, 1);
+        this.representation.scale.set(options.size || 1, options.size || 1, 1);
     }
     
     set renderOrder(value) {
@@ -241,15 +241,27 @@ class Sprite {
         return Sprite.geometry;
     }
     
-    loadMaterial(obj, url) {
+    loadMaterial(obj, url, options) {
         if(!obj.material) {
-            obj.material = new THREE.MeshBasicMaterial(
-                {
-                    map:         texureLoader.load(url),
-                    side:        THREE.FrontSide,
-                    transparent: true
-                }
-            );
+            if(options.color) {
+                // If a color is specified, use the texture as an alpha map.
+                obj.material = new THREE.MeshBasicMaterial(
+                    {
+                        alphaMap:    texureLoader.load(url),
+                        side:        THREE.FrontSide,
+                        transparent: true,
+                        color:       options.color
+                    }
+                );
+            } else {
+                obj.material = new THREE.MeshBasicMaterial(
+                    {
+                        map:         texureLoader.load(url),
+                        side:        THREE.FrontSide,
+                        transparent: true
+                    }
+                );
+            }
         }
         this.material = obj.material;
     }
@@ -297,7 +309,32 @@ class Sprite {
 
 class Reticle extends Sprite {
     constructor() {
-        super(Reticle, '../textures/duckhunt/reticle.png', 0.25);
+        if(!Reticle.colorIndex) {
+            Reticle.colorIndex = 0;
+        }
+        function vary(i) {
+            // Offset is a sequence of numbers ranging from -0.5
+            // through 0.5 which are chosen in a sequence to be well
+            // separated, starting at zero.
+            i ^= 0b00001;
+            return 0.5 - (((i & 0b00001) << 4) |
+                          ((i & 0b00010) << 2) |
+                          ((i & 0b00100) << 0) |
+                          ((i & 0b01000) >> 2) |
+                          ((i & 0b10000) >> 4)) / 32;
+        }
+        function maximallySparatedHues(i, backgroundHue, excludedArc) {
+            var hue = vary(i % 8) + 0.5;
+            var lightness = 0.5 + vary(Math.floor(i/8)) * 0.5;
+            if(typeof backgroundHue !== "undefined") {
+                hue = (backgroundHue/360 + 0.5) + (hue - 0.5) * (360 - excludedArc)/360;
+            }
+            return new THREE.Color().setHSL(hue, 1.0, lightness);
+        }
+        super(Reticle, '../textures/duckhunt/reticle_alphaMap.png', {
+            size: 0.25,
+            color: maximallySparatedHues(Reticle.colorIndex++, 120, 120)
+        });
         this.renderOrder = GameConfig.renderOrder.reticle;
         this.distance    = GameConfig.renderDepth.reticle;
     }
@@ -305,7 +342,7 @@ class Reticle extends Sprite {
 
 class Tree extends Sprite {
     constructor(azimuth) {
-        super(Tree, '../textures/duckhunt/tree.png', 2);
+        super(Tree, '../textures/duckhunt/tree.png', {size: 2});
         this.renderOrder = GameConfig.renderOrder.tree;
         this.distance    = GameConfig.renderDepth.tree;
         this.azimuth     = azimuth;
@@ -316,7 +353,7 @@ class Tree extends Sprite {
 
 class BackgroundHound extends Sprite {
     constructor(azimuth) {
-        super(BackgroundHound, '../textures/duckhunt/dog1.png', 1, 4, 1);
+        super(BackgroundHound, '../textures/duckhunt/dog1.png', {size: 1, nCols: 4, nRows: 1});
         this.renderOrder = GameConfig.renderOrder.backgroundHound;
         this.distance    = GameConfig.renderDepth.backgroundHound;
         this.azimuth     = 20;
@@ -411,7 +448,7 @@ class BackgroundHound extends Sprite {
 
 class ForegroundHound extends Sprite {
     constructor(azimuth) {
-        super(ForegroundHound, '../textures/duckhunt/dog2.png', 1, 8, 1);
+        super(ForegroundHound, '../textures/duckhunt/dog2.png', {size: 1, nCols: 8, nRows: 1});
         this.act = new ActionSequence([
             this.animateWalking.bind(this),    3,
             this.animateSniffing.bind(this),   2,
@@ -502,7 +539,10 @@ class ForegroundHound extends Sprite {
 
 class Duck extends Sprite {
     constructor(id, isBlack) {
-        super(Duck, isBlack ? '../textures/duckhunt/black_duck.png' : '../textures/duckhunt/red_duck.png', 0.75, 4, 4);
+        super(Duck,
+            '../textures/duckhunt/' + (isBlack ? 'black_duck.png' : 'red_duck.png'),
+            {size: 0.75, nCols: 4, nRows: 4}
+        );
         this.renderOrder = GameConfig.renderOrder.ducks;
         this.distance    = GameConfig.renderDepth.ducks;
         this.azimuth     = 10;
