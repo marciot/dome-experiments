@@ -79,38 +79,51 @@ function loadUrl(url, successCallback, errorCallback, responseType) {
 /* THREE.js Utility Functions */
 
 function getTextElement(text, scaleY, color) {
-    const lines      = text.split('\n');
     const fontSizePx = 40;
     const lineSizePx = 50;
     const font       = "Bold " + fontSizePx + "px Arial";
-    const fillStyle  = color || "white";
-    
+
     var canvas    = document.createElement('canvas');
     var ctx       = canvas.getContext('2d');
-    ctx.font      = font;
-    ctx.fillStyle = fillStyle;
-    
-    var maxWidth = 0;
-    for(var i = 0; i < lines.length; i++) {
-        const width = ctx.measureText(lines[i]).width;
-        maxWidth = Math.max(width, maxWidth);
-    }
-
-    canvas.width  = maxWidth;
-    canvas.height = lineSizePx * lines.length;
-    ctx.font      = font;
-    ctx.fillStyle = fillStyle;
-    for(var i = 0; i < lines.length; i++) {
-        ctx.fillText(lines[i], 0, i * lineSizePx + fontSizePx);
-    }
-    
     var material = new THREE.MeshBasicMaterial( {
         map:         new THREE.Texture(canvas),
         transparent: true
     });
-    material.map.needsUpdate = true;
+
+    function setText(text, color) {
+        if(!text) {
+            material.visible = false;
+            return;
+        }
+        const lines = text.split('\n');
+        const fillStyle  = color || "white";
+
+        var ctx = canvas.getContext('2d');
+        ctx.font         = font;
+        ctx.fillStyle = fillStyle;
+
+        var maxWidth = 0;
+        for(var i = 0; i < lines.length; i++) {
+            const width = ctx.measureText(lines[i]).width;
+            maxWidth = Math.max(width, maxWidth);
+        }
+
+        canvas.width  = maxWidth;
+        canvas.height = lineSizePx * lines.length;
+        ctx.font      = font;
+        ctx.fillStyle = fillStyle;
+        for(var i = 0; i < lines.length; i++) {
+            ctx.fillText(lines[i], 0, i * lineSizePx + fontSizePx);
+        }
+        material.map.needsUpdate = true;
+        material.visible = true;
+    }
+
+    setText(text, color);
+
     var geometry = new THREE.PlaneBufferGeometry(scaleY * canvas.width/canvas.height, scaleY);
     var mesh = new THREE.Mesh(geometry, material);
+    Object.defineProperty(mesh, 'text', {set: setText});
     return mesh;
 }
 

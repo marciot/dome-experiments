@@ -3659,21 +3659,25 @@ function Dpdb(fetchOnline, onDeviceParamsUpdated) {
     // Set the callback.
     this.onDeviceParamsUpdated = onDeviceParamsUpdated;
 
-    var xhr = new XMLHttpRequest();
-    var obj = this;
-    xhr.open('GET', ONLINE_DPDB_URL, true);
-    xhr.addEventListener('load', function() {
-      obj.loading = false;
-      if (xhr.status >= 200 && xhr.status <= 299) {
-        // Success.
-        obj.dpdb = JSON.parse(xhr.response);
-        obj.recalculateDeviceParams_();
-      } else {
-        // Error loading the DPDB.
+    try {
+        var xhr = new XMLHttpRequest();
+        var obj = this;
+        xhr.open('GET', ONLINE_DPDB_URL, true);
+        xhr.addEventListener('load', function() {
+        obj.loading = false;
+        if (xhr.status >= 200 && xhr.status <= 299) {
+            // Success.
+            obj.dpdb = JSON.parse(xhr.response);
+            obj.recalculateDeviceParams_();
+        } else {
+            // Error loading the DPDB.
+            console.error('Error loading online DPDB!');
+        }
+        });
+        xhr.send();
+    } catch(e) {
         console.error('Error loading online DPDB!');
-      }
-    });
-    xhr.send();
+    }
   }
 }
 

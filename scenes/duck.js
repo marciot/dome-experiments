@@ -71,6 +71,20 @@ function setupScene(scene) {
     foregroundHound.start(startRound);
     
     function startRound() {
+        // During the first round, keep the URL up,
+        // but subsequently hide the text at the
+        // start of each round.
+        if(this.firstRoundDone) {
+            displayStr("");
+        } else {
+            this.firstRoundDone = true;
+        }
+        // Reset hit count and show all participants
+        interact.forEach(p => {
+            p.visible = true;
+            p.ducksShot = 0;
+        });
+
         // Respawn existing ducks
         for(var i = 0; i < ducks.length; i++) {
             ducks[i].spawn();
@@ -84,19 +98,52 @@ function setupScene(scene) {
         quacking.play();
     }
 
-    // Advertise the remote control url
-    function displayInteractionUrl(url) {
-        var text = getTextElement("Go to \u201C" + url + "\u201D on\nyour Android phone to participate.", 0.8);
-        text.position.z = -4;
-        text.position.y = 4.65;
-        text.lookAt(new THREE.Vector3());
-        scene.add(text);
+    function showRoundWinner() {
+        var maxHits  = 0;
+        var nPlayers = 0;
+        // Figure out the high score
+        interact.forEach(p => {
+            if(p.ducksShot > maxHits) {
+                maxHits = p.ducksShot;
+            }
+        });
+        // Figure out how many players had the high score.
+        // Hide those who did not have the high score.
+        interact.forEach(p => {
+            if(p.ducksShot == maxHits) {
+                nPlayers++;
+                p.visible = true;
+            } else {
+                p.visible = false;
+            }
+        });
+
+        if(nPlayers == 1) {
+            displayStr("Round winner hit " + maxHits + " ducks");
+        } else {
+            displayStr(nPlayers + " participants tied for " + maxHits + " ducks");
+        }
+    }
+
+    function displayStr(str, scale) {
+        if(this.obj) {
+            this.obj.text = str;
+        } else {
+            var obj = getTextElement(str, scale || 0.8);
+            obj.position.z = -4;
+            obj.position.y = 4.65;
+            obj.lookAt(new THREE.Vector3());
+            scene.add(obj);
+            this.obj = obj;
+            return obj;
+        }
     }
     
     // Manage participants
     function stateChanged(state) {
         if(state == 'open') {
-            displayInteractionUrl("dome.marciot.com/interact" + interact.getUrlSuffix());
+            var url = "dome.marciot.com/interact" + interact.getUrlSuffix();
+            displayStr("Go to \u201C" + url + "\u201D on\nyour Android phone to participate.");
         }
     }
     var interact = new DomeInteraction(id => new MyParticipant(scene, backgroundHound), stateChanged);
@@ -110,13 +157,14 @@ function setupScene(scene) {
         var roundOver = true;
         for(var i = 0; i < ducks.length; i++) {
             ducks[i].animate(t, dt);
-            if(!ducks[i].dead) {
+            if(!ducks[i].isFallen) {
                 roundOver = false;
             }
         }
         if(ducks.length && roundOver && !foregroundHound.animating) {
             quacking.stop();
             foregroundHound.start(startRound);
+            showRoundWinner();
         }
     }
 }
@@ -130,6 +178,7 @@ class MyParticipant extends DomeParticipant {
         this.hitCounter = hitCounter;
         
         this.tmpVector        = new THREE.Vector3();
+        this.ducksShot        = 0;
     }
     
     disconnected() {
@@ -142,7 +191,11 @@ class MyParticipant extends DomeParticipant {
         var intersects = raycaster.intersectObject(this.scene, true);
         for(var i = 0; i < intersects.length; i++) {
             if(intersects[i].object.userData.isDuck) {
-                intersects[i].object.userData.isDuck.shot(() => {this.hitCounter.tallyHit(e.azimuth);});
+                var duck = intersects[i].object.userData.isDuck;
+                if(!duck.isShot) {
+                    duck.shot(() => {this.hitCounter.tallyHit(e.azimuth);});
+                    this.ducksShot++;
+                }
                 return;
             }
         }
@@ -158,6 +211,10 @@ class MyParticipant extends DomeParticipant {
     }
 
     animate(t, dt) {
+    }
+
+    set visible(value) {
+        this.cursor.visible = value;
     }
 }
 
@@ -207,7 +264,7 @@ class Sprite {
         if(!options.nRows) {
             // If this sprite is non-animated, then create a
             // material that is shared by all instances.
-            this.loadMaterial(staticClass, url, options);
+            this.loadMaterial(options.unique ? this : staticClass, url, options);
         } else {
             // If this sprite is animated, then each instance
             // gets a unique material.
@@ -305,6 +362,10 @@ class Sprite {
     update() {
         this.setPolar(this.azimuth, this.elevation, this.distance);
     }
+
+    set visible(value) {
+        this.representation.visible = value;
+    }
 }
 
 class Reticle extends Sprite {
@@ -333,7 +394,8 @@ class Reticle extends Sprite {
         }
         super(Reticle, '../textures/duckhunt/reticle_alphaMap.png', {
             size: 0.25,
-            color: maximallySparatedHues(Reticle.colorIndex++, 120, 120)
+            color: maximallySparatedHues(Reticle.colorIndex++, 120, 120),
+            unique: true // Each instance gets its own material
         });
         this.renderOrder = GameConfig.renderOrder.reticle;
         this.distance    = GameConfig.renderDepth.reticle;
@@ -557,7 +619,7 @@ class Duck extends Sprite {
         this.dy          =  -0.6;
         this.dx          =  -1.5;
         
-        this.dead        = false;
+        this.isFallen    = false;
         
         this.targetElevation = 45;
         this.timeUntilDirectionChange = 0;
@@ -629,7 +691,7 @@ class Duck extends Sprite {
             this.dx      = 0;
             this.dy      = -2;
         } else {
-            this.dead = true;
+            this.isFallen = true;
             if(this.callback) {
                 this.callback();
                 this.act.stop();
@@ -638,15 +700,15 @@ class Duck extends Sprite {
     }
     
     shot(callback) {
-        if(!this.wasShot) {
-            this.wasShot = true;
+        if(!this.isShot) {
+            this.isShot = true;
             this.callback = callback;
             this.act.next();
         }
     }
     
     animate(t, dt) {
-        if(this.dead) {
+        if(this.isFallen) {
             return;
         }
         this.act.animate(t, dt);
@@ -660,8 +722,8 @@ class Duck extends Sprite {
         var tree = (this.id < 3) ? 0 : Math.floor(Math.random() * GameConfig.treeAzimuth.length);
         var speed = 1.5 + Math.random();
         
-        this.dead                     = false;
-        this.wasShot                  = false;
+        this.isFallen                 = false;
+        this.isShot                   = false;
         this.elevation                = 0;
         this.azimuth                  = GameConfig.treeAzimuth[tree];
         this.timeUntilDirectionChange = 0;

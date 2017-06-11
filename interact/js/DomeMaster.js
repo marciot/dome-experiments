@@ -46,6 +46,12 @@ class DomeInteraction {
         }
     }
 
+    forEach(func) {
+        for(var i = 0; i < this.participants.length; i++) {
+            func(this.participants[i]);
+        }
+    }
+
     animate(t, dt) {
         this.participants.forEach(function(p) {p.animate(t, dt)});
     }
