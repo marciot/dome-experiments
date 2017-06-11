@@ -460,11 +460,16 @@ function setupDomeScene(vrDisplay) {
     
     // The resize handler
     function onWindowResize() {
-        var width  = window.innerWidth;
-        var height = window.innerHeight;
-        camera.aspect = width / height;
-        camera.updateProjectionMatrix();
-        renderer.setSize(width, height);
+        if(!this.resizeDelay) {
+            this.resizeDelay = setTimeout(() => {
+                this.resizeDelay = null;
+                var width  = window.innerWidth;
+                var height = window.innerHeight;
+                camera.aspect = width / height;
+                camera.updateProjectionMatrix();
+                renderer.setSize(width, height);
+            }, 250);
+        }
     }
     window.addEventListener( 'resize', onWindowResize, false );
     
