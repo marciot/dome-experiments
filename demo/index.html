@@ -7,13 +7,51 @@
             body {
                 margin:     0px;
                 overflow:   hidden;
+                font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
             }
 
             canvas {
                 width:      100%;
                 height:     100%;
+                cursor:     crosshair;
+            }
+
+            .box {
+                border:  2px solid black;
+                padding: 1.5vw;
+            }
+
+            .float-right {
+                float: right;
+            }
+
+            #help {
+                display:     none;
+                background:  lightGray;
+                position:    absolute;
+                left:        1em;
+                bottom:      1em;
+                margin-right: 1em;
+                line-height: 1.5;
+            }
+
+            .no-select {
+                -webkit-user-select: none;
+                -moz-user-select:    none;
+                -ms-user-select:     none;
+                user-select:         none;
+                cursor:              default;
+            }
+
+            #help button {
+                margin-left: 2em;
             }
         </style>
+        <div id="help" class="box no-select">
+            <button onClick="hideHelp()" class="float-right">Hide</button>
+            To look around, drag using the RIGHT mouse button.<br>
+            To interact, use the LEFT mouse button.
+        </div>
         <script src="../libs/three/three.js"></script>
         <script src="../libs/three/VREffect.js"></script>
         <script src="../libs/es6-collections.min.js"></script>
@@ -35,13 +73,21 @@
         <script src="../interact/js/DomeMaster.js"></script>
 
         <script>
+            var query = parseQuery();
+            var renderer = query.renderer || "PanoramaRenderer";
+            if(renderer == "WebVRDomeRenderer") {
+                document.getElementById("help").style.display = "block";
+            }
             /* Dynamically load scene and renderer based on URL. Example:
              *    http://demo?renderer=PanoramaRenderer&scene=cubes
              */
-            var query = parseQuery();
-            loadResource("../renderers/" + (query.renderer || "PanoramaRenderer") + ".js");
+            loadResource("../renderers/" + renderer + ".js");
             window.onRendererReady = function() {
                 loadResource("../scenes/"    + (query.scene    || "cubes") + ".js");
+            }
+
+            function hideHelp() {
+                document.getElementById("help").style.display = "none";
             }
         </script>
     </head>

@@ -2,6 +2,17 @@
 <html>
     <head>
         <title>THREE.js Dome Experiments</title>
+        <meta name="Description" content="Dynamic experiences for dome theaters and virtual reality.">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta property="og:url"                    content="http://dome.marciot.com" />
+        <meta property="og:type"                   content="article" />
+        <meta property="og:title"                  content="THREE.js Dome Experiments" />
+        <meta property="og:description"            content="Dynamic experiences for dome theaters and virtual reality." />
+        <meta property="og:image"                  content="http://dome.marciot.com/images/banner.png" />
+        <meta property="og:image:url"              content="http://dome.marciot.com/images/banner.png" />
+        <meta property="og:image:type"             content="image/png" />
+        <meta property="og:image:width"            content="1200" />
+        <meta property="og:image:height"           content="630" />
         <style>
             html {
                 height:              100%;
@@ -11,18 +22,48 @@
             
             body {
                 color:             white;
-                background:        black;
+                background:        #00172f;
                 font-family:       "Gill Sans", "Gill Sans MT", Calibri, sans-serif;
-                padding:           0.25em 2em;
+                padding:           0;
+                margin:            0;
+                height:            100%;
             }
 
-            img.screenshot {
-                width: 80%;
-                margin: 0 auto;
+            #header-image {
                 display: block;
+                background-repeat: no-repeat;
+                background-image: url("images/banner.png");
+                background-size: cover;
+                background-position: center;
+                background-color: black;
+                height: 50vh;
+                width: 100%;
+            }
+
+            .content {
+                padding: 0 2em 20vh 2em;
+            }
+
+            h1 {
+                font-size: 300%;
+                margin-top: 1em;
+                color: cyan;
+            }
+
+            h2 {
+                font-size: 200%;
+                color: cyan;
             }
 
             a {
+                color:      cyan;
+            }
+
+            strong a {
+                color:      yellow;
+            }
+
+            .try a {
                 color:      yellow;
             }
 
@@ -36,14 +77,25 @@
 
             table {
                 width:          100%;
-                margin:         2em auto;
+                margin:         2em 0;
                 border-spacing: 5px;
             }
 
             .heading th {
-                background: #333333;
+                background: cyan;
+                color:      black;
+                padding:    0.5em 0;
             }
-            
+
+            .shadertoy-heading th {
+                background: darkCyan;
+                color:      black;
+            }
+
+            tr.spacer {
+                height: 1em;
+            }
+
             td {
                 text-align: center;
             }
@@ -54,58 +106,58 @@
                 margin:         2em auto;
                 text-align:     left;
             }
-
-            center {
-                color: orange;
-            }
         </style>
     </head>
     <body>
-        <center><strong>Using CefWithSyphon?</strong> Use the arrow keys to scroll</center>
+        <div id="header-image"></div>
+        <div class="content">
+            <h1>THREE.js Dome Experiments</h1>
+            <h2>Dynamic experiences for dome theaters and virtual reality.</h2>
 
-        <h1>THREE.js Dome Experiments</h1>
-        <h2>Easily develop content for dome theaters and virtual reality.</h2>
+            <p>
+            This web page was born out of my experiments for <a href="https://www.facebook.com/groups/DomeLab/">DomeLab</a>. Code and documentation on <a href="https://github.com/marciot/dome-experiments">GitHub</a>.
+            </p>
 
-        <img src="images/banner2.jpg" class="screenshot">
+            <table id="demoTable">
+                <tr class="shadertoy-heading"><th colspan="5">&nbsp;</th></tr>
+                <tr class="heading">
+                    <th colspan="1">Try it!</th>
+                    <th colspan="2">For Dome Projection</th>
+                    <th colspan="1">Source Code</th>
+                    <th colspan="1">Notes</th>
+                </tr>
+            </table>
 
-        <p>
-        This web page was born out of my experiments for <a href="https://www.facebook.com/groups/DomeLab/">DomeLab</a>. Code and documentation on <a href="https://github.com/marciot/dome-experiments">GitHub</a>.
-        </p>
+            <table class="footnotes">
+                <tr>
+                    <td class="footnotes">
+                    i. This example allows audience participation using smartphones.<br>
+                    g. This example uses advanced GLSL (OpenGL Shader Language)<br>
+                    v. This example requires a &ldquo;VR Ready&rdquo; graphics card for acceptable performance.<br>
+                    nc. ShaderToys are generally licensed for non-commercial use (CC-BY-NC-SA 3.0). For non-free exhibition, please contact the individual shader author via the ShaderToy link.
+                    </td>
+                    <td>
+                        <p>Projection Resolution:</p>
+                        <select id="setResolution">
+                            <option value="default">Choose...
+                            <option value="256">256 - Pathetic
+                            <option value="512">512 - Low
+                            <option value="1024">1024 - Medium
+                            <option value="2048">2048 - Best
+                        </select>
+                    </td>
+                </tr>
+            </table>
 
-        <table id="demoTable">
-            <tr class="heading">
-                <td></td>
-                <th colspan="2">WebVR Preview</th>
-                <th colspan="2">Dome Projection</th>
-                <th colspan="1">Source Code</th>
-                <th colspan="1">Notes</th>
-            </tr>
-        </table>
+            <h2>Got a dome?</h2>
 
-        <table class="footnotes">
-            <tr>
-                <td class="footnotes">
-                i. This example allows audience participation using smartphones.<br>
-                g. This example uses advanced GLSL (OpenGL Shader Language)<br>
-                v. This example requires a &ldquo;VR Ready&rdquo; graphics card for acceptable performance.<br>
-                nc. ShaderToys are generally licensed for non-commercial use (CC-BY-NC-SA 3.0). For non-free exhibition, please contact the individual shader author via the ShaderToy link.
-                </td>
-                <td>
-                    <p>Projection Resolution:</p>
-                    <select id="setResolution">
-                        <option value="default">Choose...
-                        <option value="256">256 - Pathetic
-                        <option value="512">512 - Low
-                        <option value="1024">1024 - Medium
-                        <option value="2048">2048 - Best
-                    </select>
-                </td>
-            </tr>
-        </table>
+            If you run a planetarium dome or dome theater, download <a href="https://github.com/marciot/CefWithSyphon/releases">CefWithSyphon</a> for Mac OS X and export the Syphon feed to your favorite VJ software, such as <a href="http://www.blendydomevj.com">Blendydome VJ</a>.
 
-        <h1>Ready to project?</h1>
+            <h2>Please help support this project!</h2>
 
-        Download <a href="https://github.com/marciot/CefWithSyphon/releases">CefWithSyphon</a> and export the Syphon feed to your favorite VJ software, such as <a href="http://www.blendydomevj.com">Blendydome VJ</a>.
+            This project is free and open-source software licensed under the <a href="https://www.gnu.org/licenses/agpl-3.0.en.html">Affero GPL v3</a>. Please help support this project by visiting my <strong><a href="https://www.patreon.com/marciot">Patreon</a></strong> page.
+
+        </div>
 
         <!-- Fork me on github ribbon -->
 <a href="https://github.com/marciot/dome-experiments"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/38ef81f8aca64bb9a64448d0d70f1308ef5341ab/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6461726b626c75655f3132313632312e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png"></a>
@@ -117,9 +169,8 @@
                 var extra = extra || {};
                 var scene = extra.scene || name;
                 var tr = document.createElement("tr");
-                tr.innerHTML = '<th class="demo">' + name + '</th>' +
-                    '<td><a href="demo/?scene=' + scene + '&renderer=WebVRRenderer">WebVR</a></td>' +
-                    '<td><a href="demo/?scene=' + scene + '&renderer=WebVRDomeRenderer">WebVRDome</a></td>' +
+                tr.innerHTML =
+                    '<th class="try"><a href="demo/?scene=' + scene + '&renderer=WebVRDomeRenderer">' + name + '</a></th>' +
                     '<td><a href="demo/?scene=' + scene + '&renderer=PanoramaRenderer">Panorama</a></td>' +
                     '<td><a href="demo/?scene=' + scene + '&renderer=FullDomeRenderer">FullDome</a></td>' +
                     '<td>' +
@@ -135,9 +186,8 @@
                     id += "&ambulatory=1";
                     console.log("Enable ambulatory");
                 }
-                tr.innerHTML = '<th class="demo">' + name + '</th>' +
-                    '<td><a href="demo/?scene=shadertoy&shader=' + id + '&renderer=WebVRRenderer">WebVR</a></td>' +
-                    '<td><a href="demo/?scene=shadertoy&shader=' + id + '&renderer=WebVRDomeRenderer">WebVRDome</a></td>' +
+                tr.innerHTML =
+                    '<th class="try"><a href="demo/?scene=shadertoy&shader=' + id + '&renderer=WebVRDomeRenderer">' + name + '</a></th>' +
                     '<td><a href="demo/?scene=shadertoy&shader=' + id + '&renderer=PanoramaRenderer">Panorama</a></td>' +
                     '<td><a href="demo/?scene=shadertoy&shader=' + id + '&renderer=FullDomeRenderer">FullDome</a></td>' +
                     '<td><a href="https://www.shadertoy.com/view/' + id + '">ShaderToy</a></td>' +
@@ -154,18 +204,27 @@
             addDemo("duck",  "i");
 
             var tr = document.createElement("tr");
+            tr.classList.add("spacer");
+            demos.appendChild(tr);
+
+            var tr = document.createElement("tr");
+            tr.classList.add("shadertoy-heading");
+            tr.innerHTML='<th colspan="5">ShaderToy API Demos</th>';
+            demos.appendChild(tr);
+
+            var tr = document.createElement("tr");
             tr.classList.add("heading");
-            tr.innerHTML='<td></td><th colspan="6">ShaderToy API Demos</th>';
+            tr.innerHTML='<th>Try it!</th><th colspan="2">For Dome Projection</th><th>Source Code</th><th>Notes</th>';
             demos.appendChild(tr);
 
             addShaderToy("blobs",     "4ll3R7");
             addShaderToy("704.2",     "Xdj3Dt", {ambulatory: true});
             addShaderToy("maze",      "Xs2yzW");
-            addShaderToy("cells",     "MsXXWH");
             addShaderToy("cave",      "Xs2cRW");
             addShaderToy("truchet",   "ldfGWn", {ambulatory: true});
-            addShaderToy("grid",      "4dSGW1");
-            addShaderToy("clouds",    "XslGRr");
+            addShaderToy("cells",     "MsXXWH", {notes: "v"});
+            addShaderToy("grid",      "4dSGW1", {notes: "v"});
+            addShaderToy("clouds",    "XslGRr", {notes: "v"});
 
             document.getElementById("setResolution").addEventListener("change", function(e) {
                 if(event.target.value == "default") {
