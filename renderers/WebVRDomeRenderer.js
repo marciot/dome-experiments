@@ -244,14 +244,23 @@ function WebVRDomeRenderer( renderer, vrDisplay ) {
     /* Track the mouse, unless presenting, in which case the gaze target is in the middle of the screen */
     var me    = this;
     this.mouse = new THREE.Vector2(0,0);
-    renderer.domElement.addEventListener('mousemove', function(event) {
+    function trackMouse(x, y) {
         if(!vrDisplay.isPresenting) {
-            me.mouse.x =   ( event.clientX / window.innerWidth  ) * 2 - 1;
-            me.mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+            me.mouse.x =   ( x / window.innerWidth  ) * 2 - 1;
+            me.mouse.y = - ( y / window.innerHeight ) * 2 + 1;
         } else {
             me.mouse.x = 0;
             me.mouse.y = 0;
         }
+    }
+    renderer.domElement.addEventListener('mousemove', function(event) {
+        trackMouse(event.clientX, event.clientY);
+    }, false);
+    renderer.domElement.addEventListener('touchmove', function(event) {
+        trackMouse(event.touches[0].clientX, event.touches[0].clientY);
+    }, false);
+    renderer.domElement.addEventListener('touchstart', function(event) {
+        trackMouse(event.touches[0].clientX, event.touches[0].clientY);
     }, false);
 }
 
@@ -337,6 +346,16 @@ WebVRDomeRenderer.prototype.enableLocalInteraction = function(element, camera) {
             ev.preventDefault();
             return false;
         }
+    }, true);
+
+    element.addEventListener('touchstart', function(ev) {
+        touching = true;
+        ev.preventDefault();
+        return false;
+    }, true);
+
+    element.addEventListener('touchend', function(ev) {
+        touching = false;
     }, true);
 
     element.addEventListener('mouseup', function(ev) {

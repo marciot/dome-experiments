@@ -182,7 +182,11 @@ function setupScene(scene) {
             }
         }
         if(ducks.length && roundOver && !foregroundHound.animating) {
-            quacking.stop();
+            try {
+                quacking.stop();
+            } catch(e) {
+                // Happens on iPhone, when loading of ogg vorbis fails
+            }
             foregroundHound.start(startRound);
             showRoundWinner();
         }
