@@ -137,6 +137,30 @@ function domeCentricReferenceFrame(scene) {
     return frame;
 }
 
+// Returns a reference frame which is appropriate for an outside-in
+// viewed spherical display
+function sphericalDisplayReferenceFrame(scene) {
+    var frame = new THREE.Object3D();
+    frame.rotation.x = -RendererConfig.dome.inclination + Math.PI/2;
+    frame.position.y = RendererConfig.camera.startingPosition.y;
+    scene.add(frame);
+    return frame;
+}
+
+// Returns a quaternion that can be used to rotate a object in
+// the sphericalDisplayReferenceFrame so it moves correctly
+function getSphericalDisplayQuaternion(scene, e) {
+    if(!this.adjustment) {
+        this.adjustment = new THREE.Quaternion();
+        this.adjustment.setFromAxisAngle( new THREE.Vector3( 1, 0, 0 ), Math.PI / 2 );
+    }
+    e.quaternion.multiply(this.adjustment);
+    e.quaternion.y *= -1;
+    e.quaternion.z *= -1;
+    e.quaternion.multiply(scene.quaternion);
+    return e.quaternion;
+}
+
 function positionOnDome(object, azimuth, elevation, distanceAwayFromDome) {
     /* Adjust the values to make a coordinate system which makes sense for a
      * dome theater:
