@@ -119,13 +119,6 @@
             </p>
 
             <table id="demoTable">
-                <tr class="shadertoy-heading"><th colspan="5">&nbsp;</th></tr>
-                <tr class="heading">
-                    <th colspan="1">Try it!</th>
-                    <th colspan="2">For Dome Projection</th>
-                    <th colspan="1">Source Code</th>
-                    <th colspan="1">Notes</th>
-                </tr>
             </table>
 
             <table class="footnotes">
@@ -134,7 +127,8 @@
                     i. This example allows audience participation using smartphones.<br>
                     g. This example uses advanced GLSL (OpenGL Shader Language)<br>
                     v. This example requires a &ldquo;VR Ready&rdquo; graphics card for acceptable performance.<br>
-                    nc. ShaderToys are generally licensed for non-commercial use (CC-BY-NC-SA 3.0). For non-free exhibition, please contact the individual shader author via the ShaderToy link.
+                    nc. ShaderToys are generally licensed for non-commercial use (CC-BY-NC-SA 3.0). For non-free exhibition, please contact the individual shader author via the ShaderToy link.<br>
+                    s. This demo is best viewed on a spherical display, such as the <a href="http://www.techmoan.com/blog/2017/5/15/the-gakken-worldeye.html">Gakken WorldEye</a>
                     </td>
                     <td>
                         <p>Projection Resolution:</p>
@@ -164,7 +158,6 @@
         <!-- End of fork me on github ribbon -->
 
         <script>
-            var demos = document.getElementById("demoTable");
             function addDemo(name, notes, extra) {
                 var extra = extra || {};
                 var scene = extra.scene || name;
@@ -194,29 +187,38 @@
                     '<td class="notes">g, nc' + (extra.notes ? ", " + extra.notes : "") + '</td>';
                 demos.appendChild(tr);
             }
+            
+            function addSeparator(title) {
+                var tr = document.createElement("tr");
+                tr.classList.add("spacer");
+                demos.appendChild(tr);
 
+                var tr = document.createElement("tr");
+                tr.classList.add("shadertoy-heading");
+                tr.innerHTML='<th colspan="5">' + title + '</th>';
+                demos.appendChild(tr);
+                
+                var tr = document.createElement("tr");
+                tr.classList.add("heading");
+                tr.innerHTML='<th>Try it!</th><th colspan="2">For Projection</th><th>Source Code</th><th>Notes</th>';
+                demos.appendChild(tr);
+            }
+
+            var demos = document.getElementById("demoTable");
+            
+            addSeparator("Planetarium Dome Demos")
             addDemo("cubes");
             addDemo("knots");
             addDemo("video");
-            addDemo("bluemarble", "i");
             addDemo("tron",  "g");
             addDemo("brush", "i");
             addDemo("masks", "i");
             addDemo("duck",  "i");
+            
+            addSeparator("Spherical Display (i.e. Gakken WorldEye)")
+            addDemo("bluemarble", "s, i");
 
-            var tr = document.createElement("tr");
-            tr.classList.add("spacer");
-            demos.appendChild(tr);
-
-            var tr = document.createElement("tr");
-            tr.classList.add("shadertoy-heading");
-            tr.innerHTML='<th colspan="5">ShaderToy API Demos</th>';
-            demos.appendChild(tr);
-
-            var tr = document.createElement("tr");
-            tr.classList.add("heading");
-            tr.innerHTML='<th>Try it!</th><th colspan="2">For Dome Projection</th><th>Source Code</th><th>Notes</th>';
-            demos.appendChild(tr);
+            addSeparator("ShaderToy API Demos")
 
             addShaderToy("blobs",     "4ll3R7");
             addShaderToy("704.2",     "Xdj3Dt", {ambulatory: true});
