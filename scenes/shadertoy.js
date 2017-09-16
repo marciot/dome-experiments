@@ -85,7 +85,7 @@ function setupScene(scene) {
             vertexShader:   vertexShader,
             fragmentShader: fragmentShaderPreamble + fragmentShader,
             uniforms: {
-                iGlobalTime: {value: 1.0 },
+                iTime: {value: 1.0 },
                 iChannel0:   {value: textures[0] },
                 iChannel1:   {value: textures[1] },
                 iChannel2:   {value: textures[2] },
@@ -133,7 +133,7 @@ function setupScene(scene) {
 
     RendererConfig.animationCallback = function(t) {
         if(mesh.material.uniforms) {
-            mesh.material.uniforms.iGlobalTime.value = t;
+            mesh.material.uniforms.iTime.value = t;
         }
     }
 }
@@ -147,7 +147,7 @@ varying   float longitude;
 varying   float latitude;
 varying   vec2  vUV;
 
-uniform float     iGlobalTime;
+uniform float     iTime;
 uniform vec2      iResolution;
 uniform vec4      iMouse;
 uniform _slot0_   iChannel0;
@@ -168,7 +168,7 @@ void main()  {
     //normalize(rd);
 
 #ifdef AMBULATORY
-    vec3 ro = vec3(0., 0., -iGlobalTime);
+    vec3 ro = vec3(0., 0., -iTime);
 #else
     vec3 ro = vec3(0., 0., 0.);
 #endif
