@@ -3,17 +3,17 @@ function setupScene(scene) {
 
     var scene = sphericalDisplayReferenceFrame(scene);
     
-	var light = new THREE.AmbientLight( 0xffffff, 1 );
-	scene.add(light);
+    var light = new THREE.AmbientLight( 0xffffff, 1 );
+    scene.add(light);
   
-	var geometry = new THREE.SphereGeometry(10, 64, 64);
+    var geometry = new THREE.SphereGeometry(10, 64, 64);
     geometry.rotateX(90 * degreesToRadians);
     
-	eyeMaterial = WebGLShaders.eyeMaterial;
+    eyeMaterial = WebGLShaders.eyeMaterial;
     eyeMaterial.side = THREE.BackSide;
   
-	eye = new THREE.Mesh(geometry, eyeMaterial);
-	scene.add(eye);
+    eye = new THREE.Mesh(geometry, eyeMaterial);
+    scene.add(eye);
  
     RendererConfig.animationCallback = function(t) {
         eyeMaterial.uniforms.iGlobalTime.value = performance.now() / 3000.0;
