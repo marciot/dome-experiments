@@ -1,31 +1,46 @@
-var texureLoader = new THREE.TextureLoader();
+EarthConfig = {
+    axisTilt:         23.5,
+    sphericalDisplay: true    // Set to false for dome theater
+}
 
 function setupScene(scene) {
     alert("Blue Marble imagery courtesy http://visibleearth.nasa.gov");
-    
+
+    var texureLoader = new THREE.TextureLoader();
     var geometry = new THREE.SphereGeometry( 10, 40, 40 );
+    geometry.rotateX(90 * degreesToRadians);
     
-    var globe = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({
-        map: texureLoader.load('../textures/bluemarble/land_shallow_topo_2048.jpg'),
-        side: THREE.BackSide
+    var earth = new THREE.Object3D();
+    scene.add(earth);
+    
+    /* Since the DomeRenderer puts us inside a dome, we render the Earth as a
+       large sphere all around us, with us standing at the center viewing the
+       Earth from within */
+    var surface = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({
+        map:    texureLoader.load('../textures/bluemarble/land_shallow_topo_2048.jpg')
     }));
-    scene.add(globe);
+    earth.add(surface);
     
+    /* The cloud layer is rendered as a shell that is slightly smaller than the
+       outer Earth layer, using an additive blend to overlay the clouds on land */
     var clouds = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({
-        map: texureLoader.load('../textures/bluemarble/cloud_combined_2048.jpg'),
-        side: THREE.BackSide,
+        map:         texureLoader.load('../textures/bluemarble/cloud_combined_2048.jpg'),
         transparent: true,
-        blending: THREE.AdditiveBlending
+        blending:    THREE.AdditiveBlending
     }));
     clouds.scale.set(0.9, 0.9, 0.9);
-    globe.add(clouds);
+    surface.add(clouds);
+    
+    /* Because we are viewing from within, the continents appear reversed.
+       An easy trick is to scale by -1 in the X axis. */
+    surface.scale.x = -1;
     
     // Stand the globe up on end.
-    globe.rotation.x = Math.PI/2;
+    earth.rotation.y = EarthConfig.axisTilt * degreesToRadians;
 
     RendererConfig.animationCallback = function(t) {
-        globe.rotation.y  = 0.1  * t;
-        clouds.rotation.y = 0.01 * t;
+        surface.rotation.z =   0.1 * t;
+        clouds.rotation.z  = -0.01 * t;
     }
     
     // Advertise the remote control url
@@ -42,20 +57,24 @@ function setupScene(scene) {
             displayInteractionUrl("dome.marciot.com/interact" + interact.getUrlSuffix());
         }
     }
-    var interact = new DomeInteraction(id => new MyParticipant(globe, clouds), stateChanged);
+    var interact = new DomeInteraction(id => new MyParticipant(earth, clouds), stateChanged);
 }
 
+var controllingParticipant = null;
+
 class MyParticipant extends DomeParticipant {
-    constructor(globe, clouds) {
+    constructor(earth, clouds) {
         super();
-        this.globe  = globe;
-        this.clouds = clouds; 
+        this.earth  = earth;
+        this.clouds = clouds;
+        controllingParticipant = this;
     }
 
     disconnected() {
     }
 
     buttonDown(e) {
+        controllingParticipant = this;
         this.clouds.visibility = !this.clouds.visibility;
     }
 
@@ -63,7 +82,13 @@ class MyParticipant extends DomeParticipant {
     }
 
     pointerMoved(e) {
-        this.globe.lookAt(e.pointing)
+        if(this !== controllingParticipant) {
+            return;
+        }
+        // This is needed otherwise everything is topsy turvy...
+        e.pointing.y *= -1;
+        e.pointing.z *= -1;
+        this.earth.lookAt(e.pointing)
     }
 
     animate(t, dt) {
