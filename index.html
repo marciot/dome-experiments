@@ -2,7 +2,7 @@
 <html>
     <head>
         <title>THREE.js Dome Experiments</title>
-        <meta name="Description" content="Dynamic experiences for dome theaters and virtual reality.">
+        <meta name="Description" content="Spherical content for dome theaters, projection and VR.">
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
         <meta property="og:url"                    content="http://dome.marciot.com" />
         <meta property="og:type"                   content="article" />
@@ -106,6 +106,12 @@
                 margin:         2em auto;
                 text-align:     left;
             }
+            
+            img.patreon {
+                height:          3em;
+                float:           right;
+                margin:          0 1em;
+            }
         </style>
     </head>
     <body>
@@ -148,8 +154,9 @@
             If you run a planetarium dome or dome theater, download <a href="https://github.com/marciot/CefWithSyphon/releases">CefWithSyphon</a> for Mac OS X and export the Syphon feed to your favorite VJ software, such as <a href="http://www.blendydomevj.com">Blendydome VJ</a>.
 
             <h2>Please help support this project!</h2>
+            <a href="https://www.patreon.com/marciot"><img class="patreon" src="images/patreon-logo.png"></a>
 
-            This project is free and open-source software licensed under the <a href="https://www.gnu.org/licenses/agpl-3.0.en.html">Affero GPL v3</a>. Please help support this project by visiting my <strong><a href="https://www.patreon.com/marciot">Patreon</a></strong> page. Alernatively, if you want to <a href="https://www.amazon.com/gp/registry/wishlist/1WXXDBJMXL7QB/ref=cm_wl_huc_view">get me a Gakken WorldEye</a>, that would be awesome too ;)
+            This project is free and open-source software licensed under the <a href="https://www.gnu.org/licenses/agpl-3.0.en.html">Affero GPL v3</a>. Please help support this project by visiting my <strong><a href="https://www.patreon.com/marciot">Patreon</a></strong> page. Alernatively, if you want to <a href="https://www.amazon.com/gp/registry/wishlist/1WXXDBJMXL7QB/ref=cm_wl_huc_view">send me a Gakken WorldEye</a> to play with, that would be awesome too ;)
         </div>
 
         <!-- Fork me on github ribbon -->
@@ -199,7 +206,7 @@
                 
                 var tr = document.createElement("tr");
                 tr.classList.add("heading");
-                tr.innerHTML='<th>Try it!</th><th colspan="2">For Projection</th><th>Source Code</th><th>Notes</th>';
+                tr.innerHTML='<th>Try in VR!</th><th colspan="2">For Projection</th><th>Source Code</th><th>Notes</th>';
                 demos.appendChild(tr);
             }
 
