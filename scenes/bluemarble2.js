@@ -15,7 +15,7 @@ function setupScene(scene) {
 
     var scene = sphericalDisplayReferenceFrame(scene);
     var texureLoader = new THREE.TextureLoader();
-    var geometry = new THREE.SphereGeometry( 1, 40, 40 );
+    var geometry = new THREE.SphereGeometry( 10, 40, 40 );
     
     var earth = new THREE.Object3D();
     scene.add(earth);
