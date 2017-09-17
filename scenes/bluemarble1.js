@@ -1,3 +1,8 @@
+/* This demonstration depicts a cloudy Earth during the day.
+ *
+ * The effect is acheived by using additive blending to combine
+ * two NASA Blue Marble photos into an animated composite.
+ */
 EarthConfig = {
     axisTilt:         23.5
 }
