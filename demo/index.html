@@ -91,6 +91,9 @@
         <script src="../interact/js/DomeMaster.js"></script>
 
         <script>
+            // Initialize peerJS for interaction
+            peerJsInit();
+            
             var query = parseQuery();
             var renderer = query.renderer || "PanoramaRenderer";
             if(renderer == "WebVRDomeRenderer") {
