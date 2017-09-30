@@ -198,7 +198,8 @@ function startAnimation() {
     var clock  = new THREE.Clock();
     
     var renderer = new THREE.WebGLRenderer();
-    document.body.appendChild(renderer.domElement);
+    var canvas = renderer.domElement;
+    document.body.appendChild(canvas);
     
     panoRender = new FullDomeRenderer(renderer, true);
     
@@ -220,10 +221,12 @@ function startAnimation() {
     
     // The resize handler
     function onWindowResize() {
-        var width  = window.innerWidth;
-        var height = window.innerHeight;
+        var width  = canvas.clientWidth;
+        var height = canvas.clientHeight;
+        canvas.width  = width;
+        canvas.height = height;
         panoRender.setSize(width, height);
-        renderer.setSize(width, height);
+        renderer.setViewport(0, 0, canvas.clientWidth, canvas.clientHeight);
 
         // Show canvas size while resizing
         const resizeInfoTime = 3000;

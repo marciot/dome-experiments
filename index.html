@@ -172,6 +172,7 @@
                     '<th class="try"><a href="demo/?scene=' + scene + '&renderer=WebVRDomeRenderer">' + name + '</a></th>' +
                     '<td><a href="demo/?scene=' + scene + '&renderer=PanoramaRenderer">Panorama</a></td>' +
                     '<td><a href="demo/?scene=' + scene + '&renderer=FullDomeRenderer">FullDome</a></td>' +
+                    '<td><a href="demo/?scene=' + scene + '&renderer=FullDomeRenderer&worldEye=1" + >WorldEye</a></td>' +
                     '<td>' +
                         '<a href="https://github.com/marciot/dome-experiments/tree/master/scenes/' + scene + '.js">GitHub</a></td>' +
                     '<td class="notes">' + (notes || "") + '</td>';
@@ -189,6 +190,7 @@
                     '<th class="try"><a href="demo/?scene=shadertoy&shader=' + id + '&renderer=WebVRDomeRenderer">' + name + '</a></th>' +
                     '<td><a href="demo/?scene=shadertoy&shader=' + id + '&renderer=PanoramaRenderer">Panorama</a></td>' +
                     '<td><a href="demo/?scene=shadertoy&shader=' + id + '&renderer=FullDomeRenderer">FullDome</a></td>' +
+                    '<td><a href="demo/?scene=shadertoy&shader=' + id + '&renderer=FullDomeRenderer&worldEye=1">WorldEye</a></td>' +
                     '<td><a href="https://www.shadertoy.com/view/' + id + '">ShaderToy</a></td>' +
                     '<td class="notes">g, nc' + (extra.notes ? ", " + extra.notes : "") + '</td>';
                 demos.appendChild(tr);
@@ -201,12 +203,12 @@
 
                 var tr = document.createElement("tr");
                 tr.classList.add("shadertoy-heading");
-                tr.innerHTML='<th colspan="5">' + title + '</th>';
+                tr.innerHTML='<th colspan="6">' + title + '</th>';
                 demos.appendChild(tr);
                 
                 var tr = document.createElement("tr");
                 tr.classList.add("heading");
-                tr.innerHTML='<th>Try in VR!</th><th colspan="2">For Projection</th><th>Source Code</th><th>Notes</th>';
+                tr.innerHTML='<th>Try in VR!</th><th colspan="3">For Projection</th><th>Source Code</th><th>Notes</th>';
                 demos.appendChild(tr);
             }
 

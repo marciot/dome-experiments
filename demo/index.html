@@ -8,6 +8,23 @@
                 margin:     0px;
                 overflow:   hidden;
                 font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+
+                position:   absolute;
+                top:        0;
+                left:       0;
+                right:      0;
+                bottom:     0;
+
+                background: black;
+            }
+
+            body.aspectRatioWorldEye {
+                /* The Gakken WorldEye requires an image with a 4x3
+                  aspect ratio and a 2.5% margin all around. */
+                top:        2.5%;
+                bottom:     2.5%;
+                left:       calc(2.5% + 12.5%);
+                right:      calc(2.5% + 12.5%);
             }
 
             canvas {
@@ -85,6 +102,10 @@
             loadResource("../renderers/" + renderer + ".js");
             window.onRendererReady = function() {
                 loadResource("../scenes/"    + (query.scene    || "cubes") + ".js");
+            }
+
+            if(query.worldEye) {
+                document.body.classList.add("aspectRatioWorldEye");
             }
 
             function hideHelp() {
