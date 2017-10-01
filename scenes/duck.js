@@ -37,6 +37,8 @@ GameConfig = {
     additionalDucksPerRound: 3
 }
 
+include("DomeInteraction");
+
 var texureLoader = new THREE.TextureLoader();
 var ducks = [];
 var audioLoader   = new THREE.AudioLoader();
@@ -163,7 +165,7 @@ function setupScene(scene) {
     function stateChanged(state) {
         if(state == 'open') {
             var url = "dome.marciot.com/interact" + interact.getUrlSuffix();
-            displayStr("Go to \u201C" + url + "\u201D on\nyour Android phone to participate.");
+            displayStr("Go to \u201C" + url + "\u201D on\nyour smartphone to participate.");
         }
     }
     var interact = new DomeInteraction(id => new MyParticipant(scene, backgroundHound), stateChanged);

@@ -18,7 +18,7 @@
                 background: black;
             }
 
-            body.aspectRatioWorldEye {
+            .aspectRatioWorldEye canvas {
                 /* The Gakken WorldEye requires an image with a 4x3
                   aspect ratio and a 2.5% margin all around. */
                 top:        2.5%;
@@ -31,6 +31,12 @@
                 width:      100%;
                 height:     100%;
                 cursor:     crosshair;
+            }
+
+            video {
+                position:   absolute;
+                top:        0;
+                left:       0;
             }
 
             .box {
@@ -70,41 +76,18 @@
             To interact, use the LEFT mouse button.
         </div>
         <script src="../libs/three/three.js"></script>
-        <script src="../libs/three/VREffect.js"></script>
-        <script src="../libs/three/OBJLoader.js"></script>
         <script src="../libs/es6-collections.min.js"></script>
         <script src="../libs/es6-promise.min.js"></script>
-        <script src="../libs/webvr-polyfill/webvr-polyfill.js"></script>
-
-        <!-- The following is used to load compressed meshes -->
-        <script src="../libs/draco/DRACOLoader.js"></script>
 
         <!-- Utility code that may be used by all scenes -->
         <script src="../scenes/common.js"></script>
-
-        <!-- The following is used by the brush demo -->
-        <script src="../libs/meshline/THREE.MeshLine.js"></script>
-
-        <!-- The following files are used for interactive apps -->
-        <script src="../libs/peer.js/peer-modified.js"></script>
-        <script src="../interact/js/DomeClient.js"></script>
         <script src="../interact/js/DomeMaster.js"></script>
 
         <script>
-            // Initialize peerJS for interaction
-            peerJsInit();
-            
             var query = parseQuery();
             var renderer = query.renderer || "PanoramaRenderer";
             if(renderer == "WebVRDomeRenderer") {
                 document.getElementById("help").style.display = "block";
-            }
-            /* Dynamically load scene and renderer based on URL. Example:
-             *    http://demo?renderer=PanoramaRenderer&scene=cubes
-             */
-            loadResource("../renderers/" + renderer + ".js");
-            window.onRendererReady = function() {
-                loadResource("../scenes/"    + (query.scene    || "cubes") + ".js");
             }
 
             if(query.worldEye) {
@@ -115,11 +98,72 @@
                 document.getElementById("help").style.display = "none";
             }
 
+            /* Resource loader. Simply call include("path-to-js")
+             * and the library will be loaded prior to starting
+             * the animation.
+             */
+            var resourcesLeft = 0;
+            function include(library, async) {
+                switch(library) {
+                    case "DomeInteraction":
+                        include("../libs/peer.js/peer-modified.js", false);
+                        include("../interact/js/DomeClient.js", false);
+                        break;
+                    case "OBJLoader":
+                        include("../libs/three/OBJLoader.js");
+                        break;
+                    case "tracking.js":
+                        include("../libs/tracking.js/tracking-min.js");
+                        include("../libs/tracking.js/face-min.js");
+                        break;
+                    default:
+                        resourcesLeft++;
+                        loadResource(library, async, function() {
+                            resourcesLeft--;
+                            console.log("Loaded", library);
+                            if(resourcesLeft == 0) {
+                                resourcesLoaded();
+                            }
+                        });
+                }
+            }
+
+            var resourcesLoaded = resourcesLoadedZero;
+            function resourcesLoadedZero() {
+                resourcesLoaded = resourcesLoadedOne;
+                include("../renderers/" + renderer + ".js");
+            }
+            function resourcesLoadedOne() {
+                resourcesLoaded = resourcesLoadedTwo;
+                include("../scenes/" + (query.scene || "cubes") + ".js");
+            }
+            function resourcesLoadedTwo() {
+                if(typeof peerJsInit === "function") {
+                    // Initialize peerJS for interaction
+                    peerJsInit();
+                }
+                console.log("Starting animation");
+                startAnimation();
+            }
+            switch(renderer) {
+                case "WebVRDomeRenderer":
+                case "WebVRRenderer":
+                    include("../libs/three/VREffect.js");
+                    include("../libs/webvr-polyfill/webvr-polyfill.js");
+                    break;
+                default:
+                    resourcesLoaded();
+            }
+
+            /* Dynamically load scene and renderer based on URL. Example:
+             *    http://demo?renderer=PanoramaRenderer&scene=cubes
+             */
+
             //window.onerror = function(error) {
             //    document.write(error);
             //};
         </script>
     </head>
-    <body onLoad="startAnimation()">
+    <body>
     </body>
 </html>

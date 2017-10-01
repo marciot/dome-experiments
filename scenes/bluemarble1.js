@@ -7,6 +7,8 @@ EarthConfig = {
     axisTilt:         23.5
 }
 
+include("DomeInteraction");
+
 function setupScene(scene) {
     alert("Blue Marble imagery courtesy http://visibleearth.nasa.gov");
 
@@ -50,7 +52,7 @@ function setupScene(scene) {
     
     // Advertise the remote control url
     function displayInteractionUrl(url) {
-        var text = getTextElement("Go to \u201C" + url + "\u201D on\nyour Android phone to interact.", 0.5);
+        var text = getTextElement("Go to \u201C" + url + "\u201D on\nyour smartphone to interact.", 0.5);
         text.position.z = -0.65;
         text.position.y = -4;
         text.lookAt(scene.position);

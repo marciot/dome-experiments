@@ -18,6 +18,7 @@
  * _jf Cat Purring      | cmusounddesign | CC BY 3.0 | https://www.freesound.org/people/cmusounddesign/sounds/85163/
  *
  */
+
 DemoConfig = {
     light: {
         distanceFromDome: 1.0
@@ -27,6 +28,9 @@ DemoConfig = {
         triggerRadius: 0.5
     }
 };
+
+include("DomeInteraction");
+include("../libs/draco/DRACOLoader.js");
 
 var audioLoader   = new THREE.AudioLoader();
 var audioListener = new THREE.AudioListener();
@@ -78,7 +82,7 @@ function setupScene(scene) {
 
     // Advertise the remote control url
     function displayInteractionUrl(url) {
-        var text = getTextElement("Go to \u201C" + url + "\u201D on\nyour Android phone to participate.", 0.8);
+        var text = getTextElement("Go to \u201C" + url + "\u201D on\nyour smartphone to participate.", 0.8);
         text.position.z = -4;
         text.position.y = .65;
         scene.add(text);

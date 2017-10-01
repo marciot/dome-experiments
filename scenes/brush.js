@@ -5,6 +5,9 @@ DemoConfig = {
     },
 };
 
+include("../libs/meshline/THREE.MeshLine.js");
+include("DomeInteraction");
+
 var textureLoader = new THREE.TextureLoader();
 
 function setupScene(scene) {
@@ -20,7 +23,7 @@ function setupScene(scene) {
         
     // Advertise the remote control url
     function displayInteractionUrl(url) {
-        var text = getTextElement("Go to \u201C" + url + "\u201D on\nyour Android phone to participate.", 0.8);
+        var text = getTextElement("Go to \u201C" + url + "\u201D on\nyour smartphone to participate.", 0.8);
         text.position.z = -4;
         text.position.y = .65;
         scene.add(text);
