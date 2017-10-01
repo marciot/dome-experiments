@@ -51,7 +51,6 @@ function setupScene(scene) {
         
         // https://stackoverflow.com/questions/21513637/dot-product-of-two-quaternion-rotations
         var angularDistance = 2 * Math.acos(lookAt.dot(eye.quaternion));
-        console.log(angularDistance, 10 * degreesToRadians);
         if(angularDistance > angerThreshold * degreesToRadians) {
             anger();
         } else {
