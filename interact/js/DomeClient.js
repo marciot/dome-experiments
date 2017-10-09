@@ -4,7 +4,11 @@
  */
 
 DomeInteractionConfig = {
-    apiKey:     'u7htss9n8pz257b9',
+    peerOptions: {
+        host:       'webrtc.marciot.com',
+        post:       9000,
+        secure:     true
+    },
     peerPrefix: 'domeInteraction'
 }
 
@@ -100,7 +104,7 @@ function DomeClient(options) {
     var instanceId = m && m[1];
 
     this.comm = new PeerCommunications(
-        {key: DomeInteractionConfig.apiKey},
+        DomeInteractionConfig.peerOptions,
         DomeInteractionConfig.peerPrefix,
         {
             stateChanged: options.statusCallback

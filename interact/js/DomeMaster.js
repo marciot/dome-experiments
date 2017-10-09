@@ -58,7 +58,7 @@ class DomeInteraction {
 
     enableNetworkInteraction(stateChanged) {
         this.communications = new PeerCommunications(
-            {key: DomeInteractionConfig.apiKey},
+            DomeInteractionConfig.peerOptions,
             DomeInteractionConfig.peerPrefix,
             {
                 receivedData:     (e, peer) => this.dispatchParticipationEvent(peer, e),
