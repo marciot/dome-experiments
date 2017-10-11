@@ -1,3 +1,5 @@
+include("DomeInteraction");
+
 function setupScene(scene) {
     alert("Eye shader by iq (CC-BY-NC-SA 3.0)");
 
