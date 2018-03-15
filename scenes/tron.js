@@ -86,7 +86,9 @@ function setupScene(scene) {
     var credit = getTextElement("\u201CPurp Cycle\u201D Remade\nReal-time animation in THREE.js", 0.75);
     credit.position.z = -4;
     credit.position.y = -0.95;
-    RendererConfig.camera.rig.add(credit);
+    if(!query.notext) {
+        RendererConfig.camera.rig.add(credit);
+    }
 
     RendererConfig.animationCallback = function(t) {
         var cameraZ = -t * TronWorld.motionSpeed;
