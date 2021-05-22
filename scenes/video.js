@@ -13,7 +13,11 @@ function setupScene(scene) {
     video.height =  640;
     video.loop   = true;
     video.muted  = true;
-    video.src = "../textures/Spherible- Purp Cycle.mp4";
+    if(query.yt_eq) {
+        video.src = "https://www.youtube.com/watch?v=" + query.yt_eq
+    } else {
+        video.src = "../textures/Spherible- Purp Cycle.mp4";
+    }
     video.setAttribute( 'webkit-playsinline', 'webkit-playsinline' );
     video.setAttribute( 'playsinline', 'playsinline' );
     video.play();
@@ -32,9 +36,11 @@ function setupScene(scene) {
     mesh = new THREE.Mesh( geometry, material );
     mesh.rotation.y = -Math.PI/2;
     scene.add( mesh );
-    
-    var credit = getTextElement("Spherible - Purp Cycle\nBy Daniel Arnett", 1);
-    credit.position.z = -4;
-    credit.position.y = 0.65;
-    scene.add(credit);
+
+    if(!query.yt_eq) {
+        var credit = getTextElement("Spherible - Purp Cycle\nBy Daniel Arnett", 1);
+        credit.position.z = -4;
+        credit.position.y = 0.65;
+        scene.add(credit);
+    }
 }
